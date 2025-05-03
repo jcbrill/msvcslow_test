@@ -1058,14 +1058,15 @@ def modern_environ():
 
 
 def try_merged_env():
+    msvc_env = msvc_environment()
     full_env_keys = set(os.environ.keys())
-    scons_env_keys = set(msvc_environment().keys())
+    scons_env_keys = set(msvc_env.keys())
 
     diff = full_env_keys - scons_env_keys
     print(f"Diff: {diff}")
 
     for key in diff:
-        merged_dict = msvc_environment().copy()
+        merged_dict = msvc_env.copy()
         merged_dict[key] = os.environ[key]
         yield f"Including {key}", merged_dict
 

@@ -1,4 +1,4 @@
-name: build
+name: NO CACHE
 on:
   workflow_dispatch:
   push:
@@ -9,7 +9,7 @@ on:
 
 env:
   VSCMD_SKIP_SENDTELEMETRY: 1
-  SCONS_CACHE_MSVC_CONFIG: 1
+  SCONS_CACHE_MSVC_CONFIG: 0
 
 jobs:
   build:
