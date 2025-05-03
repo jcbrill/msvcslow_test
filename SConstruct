@@ -1090,6 +1090,7 @@ def msvc_default_invocation():
         d = msvc_find_valid_batch_script(default_version, force_env=en)
         print(f"XName: {name} -> {d['DURATION']:.2f}")
 
+    # Old set
     # d = msvc_find_valid_batch_script(default_version, force_env=os.environ.copy())
     # d = msvc_find_valid_batch_script(default_version, force_env=modern_environ())
     # _ = msvc_find_valid_batch_script(default_version, force_env=None)
