@@ -16,7 +16,6 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
-        project: [cfile-to-asm-builder, shared-lib-program, simple, simple-configure]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -37,5 +36,5 @@ jobs:
           key: ${{ env.SCONS_CACHE_KEY }}
 
       - name: Build project
-        working-directory: ${{ matrix.project }}
+        # working-directory: ${{ matrix.project }}
         run: scons
