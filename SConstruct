@@ -1081,6 +1081,9 @@ def try_modern_merged_env():
     yield "just PATHEXT", env
 
     for key in _MODERN_ENV:
+        if key not in os.environ:
+            print(f"Skipping: {key}")
+            continue
         merged_dict = env.copy()
         merged_dict[key] = os.environ[key]
         yield f"Including {key}\n->{os.environ[key]}", merged_dict
