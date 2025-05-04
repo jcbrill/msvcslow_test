@@ -1082,6 +1082,7 @@ def try_merged_env():
         return True
 
     diff_filtered = filter(filter_out, diff)
+    print(f"Filtered Diff: {diff_filtered}")
 
     for key in diff_filtered:
         merged_dict = msvc_env.copy()
