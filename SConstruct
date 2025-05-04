@@ -48,6 +48,7 @@ import time
 
 from collections import namedtuple
 from functools import cmp_to_key
+from itertools import combinations
 
 DefaultEnvironment(tools=[])
 
@@ -1056,6 +1057,14 @@ def modern_environ():
     logging.debug("env=%r", env)
     return env
 
+def get_all_combinations(input_list):
+    all_combinations = []
+    for r in range(len(input_list) + 1):
+        combinations_object = combinations(input_list, r)
+        combinations_list = list(combinations_object)
+        all_combinations.extend(combinations_list)
+    return all_combinations
+
 
 def try_merged_env():
     msvc_env = msvc_environment()
@@ -1065,11 +1074,30 @@ def try_merged_env():
     diff = full_env_keys - scons_env_keys
     print(f"Diff: {diff}")
 
-    for key in diff:
+    def filter_out(s):
+        if 'GITHUB' in s:
+            return False
+        if 'RUNNER' in s:
+            return False
+        return True
+
+    diff_filtered = filter(filter_out, diff)
+
+    for key in diff_filtered:
         merged_dict = msvc_env.copy()
         merged_dict[key] = os.environ[key]
         yield f"Including {key}", merged_dict
 
+def try_combo_merged_env():
+    msvc_env = msvc_environment()
+    full_env_keys = set(os.environ.keys())
+    scons_env_keys = set(msvc_env.keys())
+
+    diff = full_env_keys - scons_env_keys
+    print(f"Diff: {diff}")
+
+    diff_filtered = [k for k in diff if 'GITHUB' not in key or 'RUNNER' not in k]
+    all_combos = get_all_combinations(diff_filtered)
 
 def msvc_default_invocation():
     logging.debug("")
