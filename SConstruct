@@ -1146,7 +1146,7 @@ def msvc_default_invocation():
     logging.debug("")
 
 
-# msvc_default_invocation()
+msvc_default_invocation()
 # try_combo_merged_env()
 
 for v in _MODERN_ENV:
