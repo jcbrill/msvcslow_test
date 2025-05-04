@@ -1125,7 +1125,7 @@ def msvc_default_invocation():
     for name, en in [
         ("os.environ", os.environ.copy()),
         ("modern_environ", modern_environ()),
-        ("None", msvc_environment()),
+        # ("None", msvc_environment()),
     ]:
         d = msvc_find_valid_batch_script(default_version, force_env=en)
         print(f"Name: {name} -> {d['DURATION']:.2f}")
