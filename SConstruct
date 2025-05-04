@@ -1033,6 +1033,7 @@ _MODERN_ENV = [
 ]
 
 
+
 def modern_environ():
     logging.debug("")
 
@@ -1057,37 +1058,47 @@ def modern_environ():
     logging.debug("env=%r", env)
     return env
 
-def get_all_combinations(input_list):
+def get_all_combinations(input_list,my_len):
     all_combinations = []
-    for r in range(len(input_list) + 1):
+    for r in range(my_len + 1):
         combinations_object = combinations(input_list, r)
         combinations_list = list(combinations_object)
         all_combinations.extend(combinations_list)
     return all_combinations
 
+def filter_out(s):
+    if 'GITHUB' in s:
+        return False
+    if 'RUNNER' in s:
+        return False
+    return True
 
+def try_modern_merged_env():
+    msvc_env = msvc_environment()
+
+    env = msvc_env.copy()
+    env["PATHEXT"] = ".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC"
+    yield "just PATHEXT", env
+
+    
+
+    
 def try_merged_env():
     msvc_env = msvc_environment()
     full_env_keys = set(os.environ.keys())
     scons_env_keys = set(msvc_env.keys())
 
+
     diff = full_env_keys - scons_env_keys
     print(f"Diff: {diff}")
 
-    def filter_out(s):
-        if 'GITHUB' in s:
-            return False
-        if 'RUNNER' in s:
-            return False
-        return True
-
-    diff_filtered = filter(filter_out, diff)
+    diff_filtered = list(filter(filter_out, diff))
     print(f"Filtered Diff: {diff_filtered}")
 
     for key in diff_filtered:
         merged_dict = msvc_env.copy()
         merged_dict[key] = os.environ[key]
-        yield f"Including {key}", merged_dict
+        yield f"Including {key}\n->{os.environ[key]}", merged_dict
 
 def try_combo_merged_env():
     msvc_env = msvc_environment()
@@ -1097,8 +1108,11 @@ def try_combo_merged_env():
     diff = full_env_keys - scons_env_keys
     print(f"Diff: {diff}")
 
-    diff_filtered = [k for k in diff if 'GITHUB' not in key or 'RUNNER' not in k]
-    all_combos = get_all_combinations(diff_filtered)
+    diff_filtered = list(filter(filter_out, diff))
+    print(f"Finding all combinations of {len(diff_filtered)} items")
+    for r in range(2,len(diff_filtered)+1):
+        all_combos = get_all_combinations(diff_filtered,r)
+        print(f"# of combos: {len(all_combos)}")
 
 def msvc_default_invocation():
     logging.debug("")
@@ -1116,7 +1130,12 @@ def msvc_default_invocation():
         d = msvc_find_valid_batch_script(default_version, force_env=en)
         print(f"Name: {name} -> {d['DURATION']:.2f}")
 
-    for name, en in try_merged_env():
+    # for name, en in try_merged_env():
+    #     d = msvc_find_valid_batch_script(default_version, force_env=en)
+    #     print(f"XName: {name} -> {d['DURATION']:.2f}")
+
+
+    for name, en in try_modern_merged_env():
         d = msvc_find_valid_batch_script(default_version, force_env=en)
         print(f"XName: {name} -> {d['DURATION']:.2f}")
 
@@ -1127,4 +1146,9 @@ def msvc_default_invocation():
     logging.debug("")
 
 
-msvc_default_invocation()
+# msvc_default_invocation()
+# try_combo_merged_env()
+
+for v in _MODERN_ENV:
+    if os.environ.get(v,False):
+        print(f"{v}\n->{os.environ[v]}")
