@@ -1080,6 +1080,10 @@ def try_modern_merged_env():
     env["PATHEXT"] = ".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC"
     yield "just PATHEXT", env
 
+    for key in _MODERN_ENV:
+        merged_dict = env.copy()
+        merged_dict[key] = os.environ[key]
+        yield f"Including {key}\n->{os.environ[key]}", merged_dict
     
 
     
