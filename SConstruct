@@ -1077,16 +1077,17 @@ def try_modern_merged_env():
     msvc_env = msvc_environment()
 
     env = msvc_env.copy()
-    env["PATHEXT"] = ".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC"
-    yield "just PATHEXT", env
+    # env["PATHEXT"] = ".COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC"
+    env['PSModulePath'] = os.environ['PSModulePath']
+    yield "just PSModulePath", env
 
-    for key in _MODERN_ENV:
-        if key not in os.environ:
-            print(f"Skipping: {key}")
-            continue
-        merged_dict = env.copy()
-        merged_dict[key] = os.environ[key]
-        yield f"Including {key}\n->{os.environ[key]}", merged_dict
+    # for key in _MODERN_ENV:
+    #     if key not in os.environ:
+    #         print(f"Skipping: {key}")
+    #         continue
+    #     merged_dict = env.copy()
+    #     merged_dict[key] = os.environ[key]
+    #     yield f"Including {key}\n->{os.environ[key]}", merged_dict
     
 
     
@@ -1156,6 +1157,6 @@ def msvc_default_invocation():
 msvc_default_invocation()
 # try_combo_merged_env()
 
-for v in _MODERN_ENV:
-    if os.environ.get(v,False):
-        print(f"{v}\n->{os.environ[v]}")
+# for v in _MODERN_ENV:
+#     if os.environ.get(v,False):
+#         print(f"{v}\n->{os.environ[v]}")
