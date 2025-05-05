@@ -675,7 +675,7 @@ def subproc_run(env, *args, **kwargs) -> subprocess.CompletedProcess:
         )
 
     end_time = time.time()
-    logging.info("elapsed_time=%s", end_time-start_time)
+    logging.info("ELAPSED_TIME=%.2f", end_time-start_time)
 
     logging.debug("exit")
     return cp
@@ -984,8 +984,13 @@ def modern_environment(evar_list=None):
     logging.debug("env=%r", env)
     return env
 
+def log_environ():
+    for key, val in os.environ.items():
+        logging.info("os.environ[%s]=%s", key, val)
+
 def msvc_default_invocation():
     logging.debug("")
+    log_environ()
     vswhere_exe = vswhere_executable()
     vswhere_json = vswhere_query_json_output(vswhere_exe, ['-all', '-products', '*'])
     msvc_instances, msvc_map = vswhere_msvc_instances(vswhere_json)
