@@ -997,10 +997,12 @@ def msvc_default_invocation():
     installed_versions = get_installed_vcs(msvc_map)
     default_version = installed_versions[0] if installed_versions else None
     for env in [
-        scons_environment(),
-        modern_environment(),
-        scons_environment(["PSModulePath"]),
-        modern_environment(["PSModulePath"]),
+        # scons_environment(),
+        # modern_environment(),
+        # scons_environment(["PSModulePath"]),
+        # modern_environment(["PSModulePath"]),
+        scons_environment([""PSModulePath"]),
+        scons_environment(["ProgramData", "PSModulePath"]),
     ]:
         _ = msvc_find_valid_batch_script(default_version, force_env=env)
     logging.debug("")
