@@ -1029,13 +1029,14 @@ def msvc_default_invocation():
         # modern_environment(["PSModulePath"]),
         #scons_environment(["PSModulePath"]),
         scons_environment(evar_list=["PSModulePath"]),
-        scons_environment(evar_list=None, force_dict=psmodulepath()),
         scons_environment(evar_list=["ProgramData"], force_dict=psmodulepath()),
         scons_environment(evar_list=["ProgramData"], force_dict={"PSModulePath": r"C:\Modules\az_12.4.0"}),
         scons_environment(evar_list=["ProgramData"], force_dict={"PSModulePath": r"C:\Program Files\PowerShell\Modules"}),
         scons_environment(evar_list=["ProgramData"], force_dict={"PSModulePath": r"C:\Program Files\PowerShell\7\Modules"}),
         scons_environment(evar_list=["ProgramData"], force_dict={"PSModulePath": r"C:\Users\packer\Documents\WindowsPowerShell\Modules"}),
         scons_environment(evar_list=["ProgramData"], force_dict={"PSModulePath": "C:\\Program Files\\Microsoft SQL Server\\130\\Tools\\PowerShell\\Modules\\"}),
+        scons_environment(evar_list=None, force_dict=psmodulepath()),
+        scons_environment(evar_list=None),
     ]:
         _ = msvc_find_valid_batch_script(default_version, force_env=env)
     logging.debug("")
