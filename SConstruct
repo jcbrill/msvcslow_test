@@ -345,7 +345,7 @@ def find_vc_pdir(msvc_version, msvc_map):
 
     msvc_instances = msvc_map.get(key, UNDEFINED)
     if msvc_instances == UNDEFINED:
-        logging.warning(
+        logging.debug(
             'msvc instances lookup failed: msvc_version=%r, is_release=%r',
             msvc_version, is_release
         )
@@ -999,7 +999,6 @@ def msvc_default_invocation():
         scons_environment(["PSModulePath"]),
         modern_environment(["PSModulePath"]),
     ]:
-        print(env)
         _ = msvc_find_valid_batch_script(default_version, force_env=env)
     logging.debug("")
 
