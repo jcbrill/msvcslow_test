@@ -609,7 +609,7 @@ _ENV = [
     'windir',
 ]
 
-def scons_environment(evar_list=None):
+def scons_environment(evar_list=None, force_dict=None):
     logging.debug("")
 
     env = {}
@@ -626,20 +626,15 @@ def scons_environment(evar_list=None):
     env['PATH'] = os.pathsep.join([sys32_dir, sys32_wbem_dir, sys32_ps_dir])
     env['PATHEXT'] = '.COM;.EXE;.BAT;.CMD'
 
-    psmod_dirs = []
-    progfiles_dir = os.environ.get('ProgramFiles')
-    if progfiles_dir:
-        progfiles_psmod_dir = os.path.join(progfiles_dir, 'WindowsPowerShell', 'Modules') 
-        psmod_dirs.append(progfiles_psmod_dir)
-
-    sys32_psmod_dir = os.path.join(sys32_dir, 'WindowsPowerShell', 'v1.0', 'Modules')
-    psmod_dirs.append(sys32_psmod_dir)
-
     if evar_list:
         for var in evar_list:
             val = os.environ.get(var)
             if not val:
                 continue
+            env[var] = val
+
+    if force_dict:
+        for var, val in force_dict.items():
             env[var] = val
 
     logging.debug("env=%r", env)
@@ -953,7 +948,7 @@ _MODERN_ENV = [
     'ProgramW6432',
 ]
 
-def modern_environment(evar_list=None):
+def modern_environment(evar_list=None, force_dict=None):
     logging.debug("")
 
     env = {}
@@ -981,8 +976,32 @@ def modern_environment(evar_list=None):
                 continue
             env[var] = val
 
+    if force_dict:
+        for var, val in force_dict.items():
+            env[var] = val
+
     logging.debug("env=%r", env)
     return env
+
+def psmodulepath():
+    logging.debug("")
+    # psmod_dirs = []
+	# progfiles_dir = os.environ.get('ProgramFiles')
+	# if progfiles_dir:
+	#     progfiles_psmod_dir = os.path.join(progfiles_dir, 'WindowsPowerShell', 'Modules') 
+	#     psmod_dirs.append(progfiles_psmod_dir)
+	# 
+	# sys32_psmod_dir = os.path.join(sys32_dir, 'WindowsPowerShell', 'v1.0', 'Modules')
+	# psmod_dirs.append(sys32_psmod_dir)
+    psmodpath = os.pathsep.join([
+        os.path.expandvars("%USERPROFILE%\\Documents\\WindowsPowerShell\\Modules"),
+        # os.path.expandvars("%HOMEDRIVE%%HOMEPATH%\\Documents\\WindowsPowerShell\\Modules"),
+        os.path.expandvars("%ProgramFiles%\\WindowsPowerShell\\Modules"),
+        os.path.expandvars("%windir%\\System32\\WindowsPowerShell\\v1.0\\Modules"),
+    ])
+    force_dict = {"PSModulePath": psmodpath}
+    logging.debug("force_dict=%r", force_dict)
+    return force_dict
 
 def log_environ():
     for key, val in os.environ.items():
@@ -1001,8 +1020,10 @@ def msvc_default_invocation():
         # modern_environment(),
         # scons_environment(["PSModulePath"]),
         # modern_environment(["PSModulePath"]),
-        scons_environment(["PSModulePath"]),
-        scons_environment(["ProgramData", "PSModulePath"]),
+        #scons_environment(["PSModulePath"]),
+        scons_environment(evar_list=["PSModulePath"]),
+        scons_environment(evar_list=None, force_dict=psmodulepath()),
+        scons_environment(evar_list=["ProgramData"], force_dict=psmodulepath()),
     ]:
         _ = msvc_find_valid_batch_script(default_version, force_env=env)
     logging.debug("")
