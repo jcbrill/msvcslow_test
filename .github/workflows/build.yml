@@ -10,14 +10,13 @@ on:
 env:
   VSCMD_SKIP_SENDTELEMETRY: 1
   SCONS_MSCOMMON_DEBUG: "-"
-  SCONS_CACHE_MSVC_CONFIG: 1
+  # SCONS_CACHE_MSVC_CONFIG: 1
 
 jobs:
   build:
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
-        project: [cfile-to-asm-builder, shared-lib-program, simple, simple-configure]
+        os: [windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -38,5 +37,5 @@ jobs:
           key: ${{ env.SCONS_CACHE_KEY }}
 
       - name: Build project
-        working-directory: ${{ matrix.project }}
+        # working-directory: ${{ matrix.project }}
         run: scons

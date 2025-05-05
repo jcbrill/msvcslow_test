@@ -569,7 +569,7 @@ def _check_files_exist_in_vc_dir(vc_dir, msvc_version):
 
         for host_platform, target_platform in host_target_list:
 
-            logging.warning('host platform=%s, target platform=%s, version=%s', host_platform, target_platform, msvc_version)
+            logging.debug('host platform=%s, target platform=%s, version=%s', host_platform, target_platform, msvc_version)
 
             batchfile_clpathcomps = host_target_batchfile_clpathcomps.get((host_platform, target_platform), None)
             if batchfile_clpathcomps is None:
