@@ -985,17 +985,24 @@ def modern_environment(evar_list=None, force_dict=None):
 
 def psmodulepath():
     logging.debug("")
-    # psmod_dirs = []
-	# progfiles_dir = os.environ.get('ProgramFiles')
-	# if progfiles_dir:
-	#     progfiles_psmod_dir = os.path.join(progfiles_dir, 'WindowsPowerShell', 'Modules') 
-	#     psmod_dirs.append(progfiles_psmod_dir)
-	# 
-	# sys32_psmod_dir = os.path.join(sys32_dir, 'WindowsPowerShell', 'v1.0', 'Modules')
-	# psmod_dirs.append(sys32_psmod_dir)
+
+    # C:\\Modules\az_12.4.0
+    # C:\Users\packer\Documents\WindowsPowerShell\Modules
+    # C:\Program Files\WindowsPowerShell\Modules
+    # C:\Windows\system32\WindowsPowerShell\v1.0\Modules
+    # C:\Program Files\Microsoft SQL Server\130\Tools\PowerShell\Modules\
+
+    #   C:\Users\runneradmin\Documents\PowerShell\Modules
+    # C:\Program Files\PowerShell\Modules
+    # c:\program files\powershell\7\Modules
+    # C:\\Modules\az_12.4.0
+    # C:\Users\packer\Documents\WindowsPowerShell\Modules
+    #   C:\Program Files\WindowsPowerShell\Modules
+    #   C:\Windows\system32\WindowsPowerShell\v1.0\Modules
+    # C:\Program Files\Microsoft SQL Server\130\Tools\PowerShell\Modules\
+
     psmodpath = os.pathsep.join([
         os.path.expandvars("%USERPROFILE%\\Documents\\WindowsPowerShell\\Modules"),
-        # os.path.expandvars("%HOMEDRIVE%%HOMEPATH%\\Documents\\WindowsPowerShell\\Modules"),
         os.path.expandvars("%ProgramFiles%\\WindowsPowerShell\\Modules"),
         os.path.expandvars("%windir%\\System32\\WindowsPowerShell\\v1.0\\Modules"),
     ])
@@ -1024,6 +1031,11 @@ def msvc_default_invocation():
         scons_environment(evar_list=["PSModulePath"]),
         scons_environment(evar_list=None, force_dict=psmodulepath()),
         scons_environment(evar_list=["ProgramData"], force_dict=psmodulepath()),
+        scons_environment(evar_list=["ProgramData"], force_dict={"PSModulePath": r"C:\Modules\az_12.4.0"}),
+        scons_environment(evar_list=["ProgramData"], force_dict={"PSModulePath": r"C:\Program Files\PowerShell\Modules"}),
+        scons_environment(evar_list=["ProgramData"], force_dict={"PSModulePath": r"C:\Program Files\PowerShell\7\Modules"}),
+        scons_environment(evar_list=["ProgramData"], force_dict={"PSModulePath": r"C:\Users\packer\Documents\WindowsPowerShell\Modules"}),
+        scons_environment(evar_list=["ProgramData"], force_dict={"PSModulePath": "C:\\Program Files\\Microsoft SQL Server\\130\\Tools\\PowerShell\\Modules\\"}),
     ]:
         _ = msvc_find_valid_batch_script(default_version, force_env=env)
     logging.debug("")
