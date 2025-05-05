@@ -1001,7 +1001,7 @@ def msvc_default_invocation():
         # modern_environment(),
         # scons_environment(["PSModulePath"]),
         # modern_environment(["PSModulePath"]),
-        scons_environment([""PSModulePath"]),
+        scons_environment(["PSModulePath"]),
         scons_environment(["ProgramData", "PSModulePath"]),
     ]:
         _ = msvc_find_valid_batch_script(default_version, force_env=env)
