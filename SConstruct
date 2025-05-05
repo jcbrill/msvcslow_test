@@ -151,12 +151,12 @@ def vswhere_query_json_output(vswhere_exe, vswhere_args):
             raise
 
         if not cp.stdout:
-            logging.info("no vswhere information returned")
+            logging.warning("no vswhere information returned")
             break
 
         vswhere_output = cp.stdout.decode('utf8', errors='replace')
         if not vswhere_output:
-            logging.info("no vswhere information output")
+            logging.warning("no vswhere information output")
             break
 
         try:
@@ -634,8 +634,6 @@ def scons_environment(evar_list=None):
 
     sys32_psmod_dir = os.path.join(sys32_dir, 'WindowsPowerShell', 'v1.0', 'Modules')
     psmod_dirs.append(sys32_psmod_dir)
-
-    env['PSModulePath'] = os.pathsep.join(psmod_dirs)
 
     if evar_list:
         for var in evar_list:
