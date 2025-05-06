@@ -51,6 +51,11 @@ from functools import cmp_to_key
 
 DefaultEnvironment(tools=[])
 
+# TEST_VCVARS = True:  run vcvars batch file
+# TEST_VCVARS = False: run ext dir batch files
+
+TEST_VCVARS = True
+
 ### SCons Modified Source Code Begin
 
 LOGLEVEL = logging.INFO
@@ -641,91 +646,6 @@ def scons_environment(evar_list=None, force_dict=None):
     logging.debug("env=%r", env)
     return env
 
-def test_environment(evar_list=None, force_dict=None):
-    logging.debug("")
-
-    env = {}
-    for var in _ENV:
-        val = os.environ.get(var)
-        if not val:
-            continue
-        env[var] = val
-
-    syspath_dirs = []
-
-    progfiles_ps_dir = os.path.expandvars("%ProgramFiles%\\PowerShell\\7")
-    if os.path.exists(progfiles_ps_dir):
-        syspath_dirs.append(progfiles_ps_dir)  # TODO(JCB): NEW
-
-    sysroot_dir = env['SystemRoot']
-    sys32_dir = os.path.join(sysroot_dir, 'System32')
-    sys32_wbem_dir = os.path.join(sys32_dir, 'Wbem')
-    sys32_ps_dir = os.path.join(sys32_dir, 'WindowsPowerShell', 'v1.0')
-
-    syspath_dirs.extend([
-        sys32_dir,
-        sysroot_dir,  # TODO(JCB): NEW
-        sys32_wbem_dir,
-        sys32_ps_dir
-    ])
-
-    env['PATH'] = os.pathsep.join(syspath_dirs)
-    env['PATHEXT'] = '.COM;.EXE;.BAT;.CMD'
-
-    vcpkg_root = os.environ.get("VCPKG_ROOT")
-    if vcpkg_root:
-        vcpkg_root_exists = os.path.exists(vcpkg_root)
-    else:
-        vcpkg_root_exists = False
-
-    vcpkg_installation_root = os.environ.get("VCPKG_INSTALLATION_ROOT")
-    if vcpkg_installation_root:
-        vcpkg_installation_root_exists = os.path.exists(vcpkg_installation_root)
-    else:
-        vcpkg_installation_root_exists = False
-
-    # TODO(JCB): NEW
-    if vcpkg_installation_root_exists:
-        env["VCPKG_INSTALLATION_ROOT"] = vcpkg_installation_root
-
-    # TODO(JCB): NEW
-    if vcpkg_root_exists:
-        env["VCPKG_ROOT"] = vcpkg_root
-    elif vcpkg_installation_root_exists:
-        env["VCPKG_ROOT"] = vcpkg_installation_root
-
-    psmodpath_dirs = [
-        # TODO(JCB): only if "runneradmin"?
-        os.path.expandvars("%USERPROFILE%\\Documents\\WindowsPowerShell\\Modules"),
-        os.path.expandvars("%ProgramFiles%\\PowerShell\\Modules"),
-        os.path.expandvars("%ProgramFiles%\\PowerShell\\7\\Modules"),
-        os.path.expandvars("%ProgramFiles%\\WindowsPowerShell\\Modules"),
-        os.path.expandvars("%windir%\\System32\\WindowsPowerShell\\v1.0\\Modules"),
-    ]
-
-    psmodpath_dirs = [p for p in psmodpath_dirs if os.path.exists(p)]
-
-    # TODO(JCB): NEW
-    if psmodpath_dirs:
-        env["PSModulePath"] = os.pathsep.join(psmodpath_dirs)
-
-    if evar_list:
-        for var in evar_list:
-            val = os.environ.get(var)
-            if not val:
-                continue
-            env[var] = val
-
-    if force_dict:
-        for var, val in force_dict.items():
-            env[var] = val
-
-    for key, val in env.items():
-        logging.info("test_env[%s]=%s", key, val)
-
-    logging.debug("env=%r", env)
-    return env
-
 re_script_output_error = re.compile(
     r'^(' + r'|'.join([
         r'VSINSTALLDIR variable is not set',             # 2002-2003
@@ -955,6 +875,7 @@ def msvc_find_valid_batch_script(vc_installed, force_env=None):
                 logging.debug('failed vc_script=%r, vc_script_args=%s, error=%s', vc_script, arg, e)
                 vc_script = None
                 continue
+            logging.info("ELAPSED_TIME=%.2f, vc_script=%r", elapsed_time, vc_script)
             have_cl, _ = _check_cl_exists_in_script_env(data)
             if not have_cl:
                 logging.debug('skip cl.exe not found vc_script=%r, vc_script_args=%s', vc_script, arg)
@@ -1020,6 +941,26 @@ def get_installed_vcs(msvc_map):
 
 ### SCons Modified Source Code End
 
+# Windows runner PSModulePath
+#
+# runner 1:
+#     C:\\Modules\az_12.4.0
+#     C:\Users\packer\Documents\WindowsPowerShell\Modules
+#     C:\Program Files\WindowsPowerShell\Modules
+#     C:\Windows\system32\WindowsPowerShell\v1.0\Modules
+#     C:\Program Files\Microsoft SQL Server\130\Tools\PowerShell\Modules\
+#
+# runner 2:
+#     C:\Users\runneradmin\Documents\PowerShell\Modules
+#     C:\Program Files\PowerShell\Modules
+#     c:\program files\powershell\7\Modules
+#     C:\\Modules\az_12.4.0
+#     C:\Users\packer\Documents\WindowsPowerShell\Modules
+#     C:\Program Files\WindowsPowerShell\Modules
+#     C:\Windows\system32\WindowsPowerShell\v1.0\Modules
+#     C:\Program Files\Microsoft SQL Server\130\Tools\PowerShell\Modules\
+
+# TODO(JCB): NOT USED
 _MODERN_ENV = [
     'CommonProgramFiles',
     'CommonProgramFiles(arm)',
@@ -1034,26 +975,84 @@ _MODERN_ENV = [
     'ProgramW6432',
 ]
 
-def modern_environment(evar_list=None, force_dict=None):
+_TEST_ENV = [
+    'ProgramData',  # TODO(JCB): NEW
+]
+
+def test_environment(evar_list=None, force_dict=None):
     logging.debug("")
 
     env = {}
-    for var in _ENV + _MODERN_ENV:
+    for var in _ENV + _TEST_ENV:
         val = os.environ.get(var)
         if not val:
             continue
         env[var] = val
 
-    systemroot = env['SystemRoot']
-    system32 = os.path.join(systemroot, 'System32')
-    wbem = os.path.join(system32, 'Wbem')
-    powershell = os.path.join(system32, 'WindowsPowerShell', 'v1.0')
+    syspath_dirs = []
 
-    # add system root to PATH
-    env['PATH'] = os.pathsep.join([system32, systemroot, wbem, powershell])
+    progfiles_ps_dir = os.path.expandvars("%ProgramFiles%\\PowerShell\\7")
+    if os.path.exists(progfiles_ps_dir):
+        syspath_dirs.append(progfiles_ps_dir)  # TODO(JCB): NEW
 
-    #  additional extensions (windows >= Vista)
+    sysroot_dir = env['SystemRoot']
+    sys32_dir = os.path.join(sysroot_dir, 'System32')
+    sys32_wbem_dir = os.path.join(sys32_dir, 'Wbem')
+    sys32_ps_dir = os.path.join(sys32_dir, 'WindowsPowerShell', 'v1.0')
+
+    syspath_dirs.extend([
+        sys32_dir,
+        sysroot_dir,  # TODO(JCB): NEW
+        sys32_wbem_dir,
+        sys32_ps_dir
+    ])
+
+    env['PATH'] = os.pathsep.join(syspath_dirs)
+    # env['PATHEXT'] = '.COM;.EXE;.BAT;.CMD'
+
+    # TODO(JCB): NEW
     env['PATHEXT'] = '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC'
+
+    vcpkg_root = os.environ.get("VCPKG_ROOT")
+    if vcpkg_root:
+        vcpkg_root_exists = os.path.exists(vcpkg_root)
+    else:
+        vcpkg_root_exists = False
+
+    vcpkg_installation_root = os.environ.get("VCPKG_INSTALLATION_ROOT")
+    if vcpkg_installation_root:
+        vcpkg_installation_root_exists = os.path.exists(vcpkg_installation_root)
+    else:
+        vcpkg_installation_root_exists = False
+
+    # TODO(JCB)
+    # * check of .vcpg?
+    # * check USERPROFILE if can't find VC_ROOT?
+
+    # TODO(JCB): NEW
+    if vcpkg_installation_root_exists:
+        env["VCPKG_INSTALLATION_ROOT"] = vcpkg_installation_root
+
+    # TODO(JCB): NEW
+    if vcpkg_root_exists:
+        env["VCPKG_ROOT"] = vcpkg_root
+    elif vcpkg_installation_root_exists:
+        env["VCPKG_ROOT"] = vcpkg_installation_root
+
+    psmodpath_dirs = [
+        # TODO(JCB): only if "runneradmin"?
+        os.path.expandvars("%USERPROFILE%\\Documents\\WindowsPowerShell\\Modules"),
+        os.path.expandvars("%ProgramFiles%\\PowerShell\\Modules"),
+        os.path.expandvars("%ProgramFiles%\\PowerShell\\7\\Modules"),
+        os.path.expandvars("%ProgramFiles%\\WindowsPowerShell\\Modules"),
+        os.path.expandvars("%windir%\\System32\\WindowsPowerShell\\v1.0\\Modules"),
+    ]
+
+    psmodpath_dirs = [p for p in psmodpath_dirs if os.path.exists(p)]
+
+    # TODO(JCB): NEW
+    if psmodpath_dirs:
+        env["PSModulePath"] = os.pathsep.join(psmodpath_dirs)
 
     if evar_list:
         for var in evar_list:
@@ -1066,35 +1065,11 @@ def modern_environment(evar_list=None, force_dict=None):
         for var, val in force_dict.items():
             env[var] = val
 
+    for key, val in env.items():
+        logging.info("test_env[%s]=%s", key, val)
+
     logging.debug("env=%r", env)
     return env
-
-def psmodulepath():
-    logging.debug("")
-
-    # C:\\Modules\az_12.4.0
-    # C:\Users\packer\Documents\WindowsPowerShell\Modules
-    # C:\Program Files\WindowsPowerShell\Modules
-    # C:\Windows\system32\WindowsPowerShell\v1.0\Modules
-    # C:\Program Files\Microsoft SQL Server\130\Tools\PowerShell\Modules\
-
-    #   C:\Users\runneradmin\Documents\PowerShell\Modules
-    # C:\Program Files\PowerShell\Modules
-    # c:\program files\powershell\7\Modules
-    # C:\\Modules\az_12.4.0
-    # C:\Users\packer\Documents\WindowsPowerShell\Modules
-    #   C:\Program Files\WindowsPowerShell\Modules
-    #   C:\Windows\system32\WindowsPowerShell\v1.0\Modules
-    # C:\Program Files\Microsoft SQL Server\130\Tools\PowerShell\Modules\
-
-    psmodpath = os.pathsep.join([
-        os.path.expandvars("%USERPROFILE%\\Documents\\WindowsPowerShell\\Modules"),
-        os.path.expandvars("%ProgramFiles%\\WindowsPowerShell\\Modules"),
-        os.path.expandvars("%windir%\\System32\\WindowsPowerShell\\v1.0\\Modules"),
-    ])
-    force_dict = {"PSModulePath": psmodpath}
-    logging.debug("force_dict=%r", force_dict)
-    return force_dict
 
 def log_environ():
     for key, val in os.environ.items():
@@ -1132,10 +1107,7 @@ def test_ext_scripts(vc_installed):
     _ELAPSED_TOLERANCE = 1.0
     logging.debug("")
     env_list = [
-        #("scons", scons_environment()),
         ("test", test_environment()),
-        # ("modern+psmod", modern_environment(["PSModulePath"])),
-        # ("os.environ", os.environ.copy()),
     ]
     # vc_script = find_batch_file(vc_installed.vc_version, host_arch, target_arch, vc_installed.vc_dir)
     vs_root = os.path.split(vc_installed.vc_dir)[0]
@@ -1179,25 +1151,10 @@ def test_ext_scripts(vc_installed):
                     logging.info("ELAPSED_TIME=%.2f, envkind=%s, callnum=%d, script=%r", elapsed_time, label, call_num, batfile)
     logging.debug("")
 
-def test_multiple_environments(vc_installed):
+def test_scons(vc_installed):
     logging.debug("")
-    for env in [
-        # scons_environment(),
-        # modern_environment(),
-        # scons_environment(["PSModulePath"]),
-        # modern_environment(["PSModulePath"]),
-        #scons_environment(["PSModulePath"]),
-        scons_environment(evar_list=["PSModulePath"]),
-        scons_environment(evar_list=["ProgramData"], force_dict=psmodulepath()),
-        scons_environment(evar_list=["ProgramData"], force_dict={"PSModulePath": r"C:\Modules\az_12.4.0"}),
-        scons_environment(evar_list=["ProgramData"], force_dict={"PSModulePath": r"C:\Program Files\PowerShell\Modules"}),
-        scons_environment(evar_list=["ProgramData"], force_dict={"PSModulePath": r"C:\Program Files\PowerShell\7\Modules"}),
-        scons_environment(evar_list=["ProgramData"], force_dict={"PSModulePath": r"C:\Users\packer\Documents\WindowsPowerShell\Modules"}),
-        scons_environment(evar_list=["ProgramData"], force_dict={"PSModulePath": "C:\\Program Files\\Microsoft SQL Server\\130\\Tools\\PowerShell\\Modules\\"}),
-        scons_environment(evar_list=None, force_dict=psmodulepath()),
-        scons_environment(evar_list=None),
-    ]:
-        _ = msvc_find_valid_batch_script(vc_installed, force_env=env)
+    env = test_environment()
+    _ = msvc_find_valid_batch_script(vc_installed, force_env=env)
     logging.debug("")
 
 def msvc_default_invocation(func_list):
@@ -1210,8 +1167,8 @@ def msvc_default_invocation(func_list):
             func(default_version)
     logging.debug("")
 
-func_list = [test_multiple_environments]
-func_list = [test_ext_scripts]
+func_list = [test_scons] if TEST_VCVARS else [test_ext_scripts]
+
 msvc_default_invocation(func_list)
 logging.info("finished")
 
