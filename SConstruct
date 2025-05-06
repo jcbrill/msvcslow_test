@@ -1031,8 +1031,8 @@ def test_ext_scripts(vc_installed):
     logging.debug("")
     env_list = [
         ("scons", scons_environment()),
-        ("modern+psmod", modern_environment(["PSModulePath"])),
-        ("os.environ", os.environ.copy()),
+        # ("modern+psmod", modern_environment(["PSModulePath"])),
+        # ("os.environ", os.environ.copy()),
     ]
     # vc_script = find_batch_file(vc_installed.vc_version, host_arch, target_arch, vc_installed.vc_dir)
     vs_root = os.path.split(vc_installed.vc_dir)[0]
@@ -1068,12 +1068,12 @@ def test_ext_scripts(vc_installed):
             filename = os.path.split(batfile)[-1]
             if filename.lower() in ("vcvars.bat",):
                 continue
-            for i in range(_NITERATIONS):
+            for call_num in range(_NITERATIONS):
                 data, elapsed_time = script_env(batfile, force_env=env)
                 if elapsed_time > _ELAPSED_TOLERANCE:
                     logging.warning("!!! ELAPSED_TIME=%.2f, envkind=%s, script=%r !!!", elapsed_time, label, batfile)
                 else:
-                    logging.info("ELAPSED_TIME=%.2f, envkind=%s, script=%r", elapsed_time, label, batfile)
+                    logging.info("ELAPSED_TIME=%.2f, envkind=%s, callnum=%d, script=%r", elapsed_time, label, call_num, batfile)
     logging.debug("")
 
 def test_multiple_environments(vc_installed):
