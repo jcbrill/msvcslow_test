@@ -656,9 +656,6 @@ def test_environment(evar_list=None, force_dict=None):
     progfiles_ps_dir = os.path.expandvars("%ProgramFiles%\\PowerShell\\7")
     if os.path.exists(progfiles_ps_dir):
         syspath_dirs.append(progfiles_ps_dir)  # TODO(JCB): NEW
-        have_ps7 = True
-    else:
-        have_ps7 = False
 
     sysroot_dir = env['SystemRoot']
     sys32_dir = os.path.join(sysroot_dir, 'System32')
@@ -687,9 +684,11 @@ def test_environment(evar_list=None, force_dict=None):
     else:
         vcpkg_installation_root_exists = False
 
+    # TODO(JCB): NEW
     if vcpkg_installation_root_exists:
         env["VCPKG_INSTALLATION_ROOT"] = vcpkg_installation_root
 
+    # TODO(JCB): NEW
     if vcpkg_root_exists:
         env["VCPKG_ROOT"] = vcpkg_root
     elif vcpkg_installation_root_exists:
@@ -697,7 +696,7 @@ def test_environment(evar_list=None, force_dict=None):
 
     psmodpath_dirs = [
         p for p in [
-            os.path.expandvars("%USERPROFILE%\\Documents\\WindowsPowerShell\\Modules"),
+            # os.path.expandvars("%USERPROFILE%\\Documents\\WindowsPowerShell\\Modules"),
             os.path.expandvars("%ProgramFiles%\\PowerShell\\Modules"),
             os.path.expandvars("%ProgramFiles%\\PowerShell\\7\\Modules"),
             os.path.expandvars("%ProgramFiles%\\WindowsPowerShell\\Modules"),
@@ -706,6 +705,7 @@ def test_environment(evar_list=None, force_dict=None):
         if os.path.exists(p)
     ]
 
+    # TODO(JCB): NEW
     if psmodpath_dirs:
         env["PSModulePath"] = os.pathsep.join(psmodpath_dirs)
 
