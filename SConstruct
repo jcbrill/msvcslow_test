@@ -54,7 +54,7 @@ DefaultEnvironment(tools=[])
 # TEST_VCVARS = True:  run vcvars batch file
 # TEST_VCVARS = False: run ext dir batch files
 
-TEST_VCVARS = True
+TEST_VCVARS = False
 
 # TEST_NEWENV = True:  modified environment
 # TEST_NEWENV = False: scons environment
@@ -955,6 +955,30 @@ def get_installed_vcs(msvc_map):
 #     C:\Windows\system32\WindowsPowerShell\v1.0\Modules
 #     C:\Program Files\Microsoft SQL Server\130\Tools\PowerShell\Modules\
 
+#
+# vcpkg_root = os.environ.get("VCPKG_ROOT")
+# if vcpkg_root:
+#     vcpkg_root_exists = os.path.exists(vcpkg_root)
+# else:
+#     vcpkg_root_exists = False
+
+# vcpkg_installation_root = os.environ.get("VCPKG_INSTALLATION_ROOT")
+# if vcpkg_installation_root:
+#     vcpkg_installation_root_exists = os.path.exists(vcpkg_installation_root)
+# else:
+#     vcpkg_installation_root_exists = False
+
+# * check of .vcpg-root?
+# * check USERPROFILE if can't find VC_ROOT?
+
+#if vcpkg_installation_root_exists:
+#    env["VCPKG_INSTALLATION_ROOT"] = vcpkg_installation_root
+
+#if vcpkg_root_exists:
+#    env["VCPKG_ROOT"] = vcpkg_root
+#elif vcpkg_installation_root_exists:
+#    env["VCPKG_ROOT"] = vcpkg_installation_root
+
 _TEST_ENV = [
     'VCPKG_DISABLE_METRICS',  # TODO(JCB): NEW
 ]
@@ -992,32 +1016,6 @@ def test_environment():
     ]
 
     env["PSModulePath"] = os.pathsep.join(psmodpath_dirs)  # TODO(JCB): NEW
-
-    # vcpkg_root = os.environ.get("VCPKG_ROOT")
-    # if vcpkg_root:
-    #     vcpkg_root_exists = os.path.exists(vcpkg_root)
-    # else:
-    #     vcpkg_root_exists = False
-
-    # vcpkg_installation_root = os.environ.get("VCPKG_INSTALLATION_ROOT")
-    # if vcpkg_installation_root:
-    #     vcpkg_installation_root_exists = os.path.exists(vcpkg_installation_root)
-    # else:
-    #     vcpkg_installation_root_exists = False
-
-    # * check of .vcpg-root?
-    # * check USERPROFILE if can't find VC_ROOT?
-
-    #if vcpkg_installation_root_exists:
-    #    env["VCPKG_INSTALLATION_ROOT"] = vcpkg_installation_root
-
-    #if vcpkg_root_exists:
-    #    env["VCPKG_ROOT"] = vcpkg_root
-    #elif vcpkg_installation_root_exists:
-    #    env["VCPKG_ROOT"] = vcpkg_installation_root
-
-    for key, val in env.items():
-        logging.info("test_env[%s]=%s", key, val)
 
     logging.debug("env=%r", env)
     return env
@@ -1088,6 +1086,8 @@ def test_ext_scripts(vc_installed):
             if key in env:
                 continue
             env[key] = val
+        for key, val in env.items():
+            logging.info('env[%s]=%s', key, val)
         for batfile in vsdevcmd_ext_files:
             filename = os.path.split(batfile)[-1]
             if filename.lower() in ("vcvars.bat",):
@@ -1102,7 +1102,12 @@ def test_ext_scripts(vc_installed):
 
 def test_scons(vc_installed):
     logging.debug("")
-    env = test_environment()
+    if TEST_NEWENV:
+        env = test_environment()
+    else:
+        env = scons_environment()
+    for key, val in env.items():
+        logging.info('env[%s]=%s', key, val)
     _ = msvc_find_valid_batch_script(vc_installed, force_env=env)
     logging.debug("")
 
