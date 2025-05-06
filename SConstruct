@@ -684,7 +684,7 @@ def get_output(vcbat, args=None, skip_sendtelemetry=False, force_env=None):
         env = scons_environment()
 
     for key, val in env.items():
-        logging.info('env[%s]=%s', key, val)
+        logging.debug('env[%s]=%s', key, val)
 
     if skip_sendtelemetry:
         # _force_vscmd_skip_sendtelemetry(env)
@@ -700,8 +700,6 @@ def get_output(vcbat, args=None, skip_sendtelemetry=False, force_env=None):
     cp, elapsed_time = subproc_run(
         env, cmd_str, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
     )
-
-    logging.info("!!! ELAPSED_TIME=%.2f, script=%r !!!", elapsed_time, vcbat)
 
     OEM = "oem"
 
@@ -726,7 +724,7 @@ def get_output(vcbat, args=None, skip_sendtelemetry=False, force_env=None):
         raise OSError(cp.stderr.decode(OEM))
 
     logging.debug("exit")
-    return cp.stdout.decode(OEM)
+    return cp.stdout.decode(OEM), elapsed_time
 
 KEEPLIST = (
     "INCLUDE",
@@ -796,7 +794,7 @@ def script_env(script, args=None, force_env=None):
     # skip_sendtelemetry = _skip_sendtelemetry(env)
 
     skip_sendtelemetry = False
-    stdout = get_output(script, args, skip_sendtelemetry=skip_sendtelemetry, force_env=force_env)
+    stdout, elapsed_time = get_output(script, args, skip_sendtelemetry=skip_sendtelemetry, force_env=force_env)
 
     data = parse_output(stdout)
 
@@ -826,7 +824,7 @@ def script_env(script, args=None, force_env=None):
             raise BatchFileExecutionError(script_errmsg)
 
     logging.debug("leave")
-    return data
+    return data, elapsed_time
 
 def find_batch_file(msvc_version, host_arch, target_arch, pdir):
     logging.debug("")
@@ -866,7 +864,7 @@ def msvc_find_valid_batch_script(vc_installed, force_env=None):
             arg = ""
             logging.debug('trying vc_script=%r, vc_script_args=%s', vc_script, arg)
             try:
-                data = script_env(vc_script, args=arg, force_env=force_env)
+                data, elapsed_time = script_env(vc_script, args=arg, force_env=force_env)
             except BatchFileExecutionError as e:
                 logging.debug('failed vc_script=%r, vc_script_args=%s, error=%s', vc_script, arg, e)
                 vc_script = None
@@ -1028,9 +1026,14 @@ def msvc_default_version():
     return default_version
 
 def test_ext_scripts(vc_installed):
+    _NITERATIONS = 3
+    _ELAPSED_TOLERANCE = 1.0
     logging.debug("")
-    env = modern_environment(["PSModulePath"])
-    env = scons_environment()
+    env_list = [
+        ("scons", scons_environment()),
+        ("modern+psmod", modern_environment(["PSModulePath"])),
+        ("os.environ", os.environ.copy()),
+    ]
     # vc_script = find_batch_file(vc_installed.vc_version, host_arch, target_arch, vc_installed.vc_dir)
     vs_root = os.path.split(vc_installed.vc_dir)[0]
     vs_tools = os.path.join(vs_root, "Common7", "Tools")
@@ -1055,15 +1058,22 @@ def test_ext_scripts(vc_installed):
         "VSCMD_SKIP_SENDTELEMETRY": "1",
         "VSCMD_VER": "17.0",
     }
-    for key, val in vsdevcmd_env.items():
-        if key in env:
-            continue
-        env[key] = val
-    for batfile in vsdevcmd_ext_files:
-        filename = os.path.split(batfile)[-1]
-        if filename.lower() in ("vcvars.bat",):
-            continue
-        data = script_env(batfile, force_env=env)
+    for label, baseenv in env_list:
+        env = dict(baseenv)
+        for key, val in vsdevcmd_env.items():
+            if key in env:
+                continue
+            env[key] = val
+        for batfile in vsdevcmd_ext_files:
+            filename = os.path.split(batfile)[-1]
+            if filename.lower() in ("vcvars.bat",):
+                continue
+            for i in range(_NITERATIONS):
+                data, elapsed_time = script_env(batfile, force_env=env)
+                if elapsed_time > _ELAPSED_TOLERANCE:
+                    logging.warning("!!! ELAPSED_TIME=%.2f, envkind=%s, script=%r !!!", elapsed_time, label, batfile)
+                else:
+                    logging.info("ELAPSED_TIME=%.2f, envkind=%s, script=%r", elapsed_time, label, batfile)
     logging.debug("")
 
 def test_multiple_environments(vc_installed):
