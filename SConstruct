@@ -599,6 +599,7 @@ def _check_files_exist_in_vc_dir(vc_dir, msvc_version):
 _ENV = [
     'ComSpec',
     'OS',
+    'ProgramData',  # TODO(JCB): NEW
     'SystemDrive',
     'SystemRoot',
     'TEMP',
@@ -636,6 +637,91 @@ def scons_environment(evar_list=None, force_dict=None):
     if force_dict:
         for var, val in force_dict.items():
             env[var] = val
+
+    logging.debug("env=%r", env)
+    return env
+
+def test_environment(evar_list=None, force_dict=None):
+    logging.debug("")
+
+    env = {}
+    for var in _ENV:
+        val = os.environ.get(var)
+        if not val:
+            continue
+        env[var] = val
+
+    syspath_dirs = []
+
+    progfiles_ps_dir = os.path.expandvars("%ProgramFiles%\\PowerShell\\7")
+    if os.path.exists(progfiles_ps_dir):
+        syspath_dirs.append(progfiles_ps_dir)  # TODO(JCB): NEW
+        have_ps7 = True
+    else:
+        have_ps7 = False
+
+    sysroot_dir = env['SystemRoot']
+    sys32_dir = os.path.join(sysroot_dir, 'System32')
+    sys32_wbem_dir = os.path.join(sys32_dir, 'Wbem')
+    sys32_ps_dir = os.path.join(sys32_dir, 'WindowsPowerShell', 'v1.0')
+
+    syspath_dirs.extend([
+        sys32_dir,
+        sysroot_dir,  # TODO(JCB): NEW
+        sys32_wbem_dir,
+        sys32_ps_dir
+    ])
+
+    env['PATH'] = os.pathsep.join(syspath_dirs)
+    env['PATHEXT'] = '.COM;.EXE;.BAT;.CMD'
+
+    vcpkg_root = os.environ.get("VCPKG_ROOT")
+    if vcpkg_root:
+        vcpkg_root_exists = os.path.exists(vcpkg_root)
+    else:
+        vcpkg_root_exists = False
+
+    vcpkg_installation_root = os.environ.get("VCPKG_INSTALLATION_ROOT")
+    if vcpkg_installation_root:
+        vcpkg_installation_root_exists = os.path.exists(vcpkg_installation_root)
+    else:
+        vcpkg_installation_root_exists = False
+
+    if vcpkg_installation_root_exists:
+        env["VCPKG_INSTALLATION_ROOT"] = vcpkg_installation_root
+
+    if vcpkg_root_exists:
+        env["VCPKG_ROOT"] = vcpkg_root
+    elif vcpkg_installation_root_exists:
+        env["VCPKG_ROOT"] = vcpkg_installation_root
+
+    psmodpath_dirs = [
+        p for p in [
+            os.path.expandvars("%USERPROFILE%\\Documents\\WindowsPowerShell\\Modules"),
+            os.path.expandvars("%ProgramFiles%\\PowerShell\\Modules"),
+            os.path.expandvars("%ProgramFiles%\\PowerShell\\7\\Modules"),
+            os.path.expandvars("%ProgramFiles%\\WindowsPowerShell\\Modules"),
+            os.path.expandvars("%windir%\\System32\\WindowsPowerShell\\v1.0\\Modules"),
+        ]
+        if os.path.exists(p)
+    ]
+
+    if psmodpath_dirs:
+        env["PSModulePath"] = os.pathsep.join(psmodpath_dirs)
+
+    if evar_list:
+        for var in evar_list:
+            val = os.environ.get(var)
+            if not val:
+                continue
+            env[var] = val
+
+    if force_dict:
+        for var, val in force_dict.items():
+            env[var] = val
+
+    for key, val in env.items():
+        logging.info("test_env[%s]=%s", key, val)
 
     logging.debug("env=%r", env)
     return env
@@ -1046,7 +1132,8 @@ def test_ext_scripts(vc_installed):
     _ELAPSED_TOLERANCE = 1.0
     logging.debug("")
     env_list = [
-        ("scons", scons_environment()),
+        #("scons", scons_environment()),
+        ("test", test_environment()),
         # ("modern+psmod", modern_environment(["PSModulePath"])),
         # ("os.environ", os.environ.copy()),
     ]
