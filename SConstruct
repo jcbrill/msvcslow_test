@@ -1014,8 +1014,24 @@ def log_environ():
     for key, val in os.environ.items():
         logging.info("os.environ[%s]=%s", key, val)
 
+def log_syspath_programs(proglist):
+    logging.debug("")
+    syspath_locations = {}
+    syspath = os.environ.get("PATH")
+    if syspath:
+        for p in syspath.split(os.pathsep):
+            for progname in proglist:
+                progpath = os.path.join(os.path.normpath(p), progname)
+                if not os.path.exists(progpath):
+                    continue
+                syspath_locations.setdefault(progname, []).append(progpath)
+                logging.info("progname=%r, progpath=%r", progname, progpath)
+    logging.debug("")
+    return syspath_locations
+
 def msvc_default_version():
     logging.debug("")
+    log_syspath_programs(["vcpkg.exe", "pwsh.exe", "powershell.exe"])
     log_environ()
     vswhere_exe = vswhere_executable()
     vswhere_json = vswhere_query_json_output(vswhere_exe, ['-all', '-products', '*'])
