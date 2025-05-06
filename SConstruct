@@ -672,10 +672,8 @@ def subproc_run(env, *args, **kwargs) -> subprocess.CompletedProcess:
     end_time = time.time()
     elapsed_time = end_time-start_time
 
-    logging.info("!!! ELAPSED_TIME=%.2f !!!", elapsed_time)
-
-    logging.debug("exit")
-    return cp
+    logging.debug("elapsed_time==%.2f", elapsed_time)
+    return cp, elapsed_time
 
 def get_output(vcbat, args=None, skip_sendtelemetry=False, force_env=None):
     logging.debug("vcbat=%r, force_env=%r", vcbat, force_env)
@@ -699,9 +697,11 @@ def get_output(vcbat, args=None, skip_sendtelemetry=False, force_env=None):
         logging.debug("Calling '%s'", vcbat)
         cmd_str = '"%s" & set' % vcbat
 
-    cp = subproc_run(
+    cp, elapsed_time = subproc_run(
         env, cmd_str, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
     )
+
+    logging.info("!!! ELAPSED_TIME=%.2f, script=%r !!!", elapsed_time, vcbat)
 
     OEM = "oem"
 
