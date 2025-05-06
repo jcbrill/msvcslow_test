@@ -54,7 +54,7 @@ DefaultEnvironment(tools=[])
 # TEST_VCVARS = True:  run vcvars batch file
 # TEST_VCVARS = False: run ext dir batch files
 
-TEST_VCVARS = False
+TEST_VCVARS = True
 
 _EXT_ITERATIONS = 5
 _EXT_ELAPSED_TOLERANCE = 1.0
