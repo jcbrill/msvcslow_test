@@ -54,7 +54,10 @@ DefaultEnvironment(tools=[])
 # TEST_VCVARS = True:  run vcvars batch file
 # TEST_VCVARS = False: run ext dir batch files
 
-TEST_VCVARS = True
+TEST_VCVARS = False
+
+_EXT_ITERATIONS = 5
+_EXT_ELAPSED_TOLERANCE = 1.0
 
 ### SCons Modified Source Code Begin
 
@@ -1103,8 +1106,6 @@ def msvc_default_version():
     return default_version
 
 def test_ext_scripts(vc_installed):
-    _NITERATIONS = 3
-    _ELAPSED_TOLERANCE = 1.0
     logging.debug("")
     env_list = [
         ("test", test_environment()),
@@ -1143,9 +1144,9 @@ def test_ext_scripts(vc_installed):
             filename = os.path.split(batfile)[-1]
             if filename.lower() in ("vcvars.bat",):
                 continue
-            for call_num in range(_NITERATIONS):
+            for call_num in range(_EXT_ITERATIONS):
                 data, elapsed_time = script_env(batfile, force_env=env)
-                if elapsed_time > _ELAPSED_TOLERANCE:
+                if elapsed_time > _EXT_ELAPSED_TOLERANCE:
                     logging.warning("!!! ELAPSED_TIME=%.2f, envkind=%s, script=%r !!!", elapsed_time, label, batfile)
                 else:
                     logging.info("ELAPSED_TIME=%.2f, envkind=%s, callnum=%d, script=%r", elapsed_time, label, call_num, batfile)
