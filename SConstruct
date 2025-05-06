@@ -670,7 +670,9 @@ def subproc_run(env, *args, **kwargs) -> subprocess.CompletedProcess:
         )
 
     end_time = time.time()
-    logging.info("ELAPSED_TIME=%.2f", end_time-start_time)
+    elapsed_time = end_time-start_time
+
+    logging.info("!!! ELAPSED_TIME=%.2f !!!", elapsed_time)
 
     logging.debug("exit")
     return cp
@@ -1014,7 +1016,7 @@ def log_environ():
     for key, val in os.environ.items():
         logging.info("os.environ[%s]=%s", key, val)
 
-def msvc_default_invocation():
+def msvc_default_version():
     logging.debug("")
     log_environ()
     vswhere_exe = vswhere_executable()
@@ -1022,6 +1024,50 @@ def msvc_default_invocation():
     msvc_instances, msvc_map = vswhere_msvc_instances(vswhere_json)
     installed_versions = get_installed_vcs(msvc_map)
     default_version = installed_versions[0] if installed_versions else None
+    logging.info("default_version=%r", default_version)
+    return default_version
+
+def test_ext_scripts(vc_installed):
+    logging.debug("")
+    env = modern_environment(["PSModulePath"])
+    env = scons_environment()
+    # vc_script = find_batch_file(vc_installed.vc_version, host_arch, target_arch, vc_installed.vc_dir)
+    vs_root = os.path.split(vc_installed.vc_dir)[0]
+    vs_tools = os.path.join(vs_root, "Common7", "Tools")
+    vs_vsdevcmd = os.path.join(vs_tools, "vsdevcmd")
+    vs_vsdevcmd_core = os.path.join(vs_vsdevcmd, "core")
+    vs_vsdevcmd_ext = os.path.join(vs_vsdevcmd, "ext")
+    vsdevcmd_ext_files = [
+        p for p in 
+        [os.path.join(vs_vsdevcmd_ext, p) for p in os.listdir(vs_vsdevcmd_ext)]
+        if os.path.isfile(p) and os.path.splitext(p)[-1].lower() == ".bat"
+    ]
+    vsdevcmd_ext_files.sort()
+    vsdevcmd_env = {
+        "DevEnvDir": os.path.join(vs_root, "Common7", "IDE") + "\\",
+        "VCIDEINSTALLDIR": os.path.join(vs_root, "Common7", "IDE", "VC") + "\\",
+        "VCINSTALLDIR": os.path.join(vs_root, "VC") + "\\",
+        "VSINSTALLDIR": vs_root + "\\",
+        # JCB: TODO REMOVE HARDCODED
+        "VSCMD_ARG_app_plat": "Desktop",
+        "VSCMD_ARG_HOST_ARCH": "x64",
+        "VSCMD_ARG_TGT_ARCH": "x64",
+        "VSCMD_SKIP_SENDTELEMETRY": "1",
+        "VSCMD_VER": "17.0",
+    }
+    for key, val in vsdevcmd_env.items():
+        if key in env:
+            continue
+        env[key] = val
+    for batfile in vsdevcmd_ext_files:
+        filename = os.path.split(batfile)[-1]
+        if filename.lower() in ("vcvars.bat",):
+            continue
+        data = script_env(batfile, force_env=env)
+    logging.debug("")
+
+def test_multiple_environments(vc_installed):
+    logging.debug("")
     for env in [
         # scons_environment(),
         # modern_environment(),
@@ -1038,8 +1084,21 @@ def msvc_default_invocation():
         scons_environment(evar_list=None, force_dict=psmodulepath()),
         scons_environment(evar_list=None),
     ]:
-        _ = msvc_find_valid_batch_script(default_version, force_env=env)
+        _ = msvc_find_valid_batch_script(vc_installed, force_env=env)
     logging.debug("")
 
-msvc_default_invocation()
+def msvc_default_invocation(func_list):
+    logging.debug("")
+    default_version = msvc_default_version()
+    if default_version and func_list:
+        for func in func_list:
+            if not func:
+                continue
+            func(default_version)
+    logging.debug("")
+
+func_list = [test_multiple_environments]
+func_list = [test_ext_scripts]
+msvc_default_invocation(func_list)
+logging.info("finished")
 
