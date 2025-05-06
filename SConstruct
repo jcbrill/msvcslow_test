@@ -1086,8 +1086,8 @@ def msvc_default_version():
 def test_ext_scripts(vc_installed):
     logging.debug("")
     env_list = [
-        # ("scons", scons_environment()),
-        ("test", test_environment()),
+        ("scons", scons_environment()),
+        # ("test", test_environment()),
     ]
     # vc_script = find_batch_file(vc_installed.vc_version, host_arch, target_arch, vc_installed.vc_dir)
     vs_root = os.path.split(vc_installed.vc_dir)[0]
