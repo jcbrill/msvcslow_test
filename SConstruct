@@ -54,7 +54,7 @@ DefaultEnvironment(tools=[])
 # TEST_VCVARS = True:  run vcvars batch file
 # TEST_VCVARS = False: run ext dir batch files
 
-TEST_VCVARS = True
+TEST_VCVARS = False
 
 _EXT_ITERATIONS = 5
 _EXT_ELAPSED_TOLERANCE = 1.0
@@ -978,8 +978,9 @@ _MODERN_ENV = [
     'ProgramW6432',
 ]
 
-_TEST_ENV = [
-    'ProgramData',  # TODO(JCB): NEW
+_TEST_ENV = [  # TODO(JCB): NEW
+    'ProgramData',
+    'VCPKG_DISABLE_METRICS',
 ]
 
 def test_environment(evar_list=None, force_dict=None):
@@ -1016,35 +1017,35 @@ def test_environment(evar_list=None, force_dict=None):
     # TODO(JCB): NEW
     env['PATHEXT'] = '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC'
 
-    vcpkg_root = os.environ.get("VCPKG_ROOT")
-    if vcpkg_root:
-        vcpkg_root_exists = os.path.exists(vcpkg_root)
-    else:
-        vcpkg_root_exists = False
+    # vcpkg_root = os.environ.get("VCPKG_ROOT")
+    # if vcpkg_root:
+    #     vcpkg_root_exists = os.path.exists(vcpkg_root)
+    # else:
+    #     vcpkg_root_exists = False
 
-    vcpkg_installation_root = os.environ.get("VCPKG_INSTALLATION_ROOT")
-    if vcpkg_installation_root:
-        vcpkg_installation_root_exists = os.path.exists(vcpkg_installation_root)
-    else:
-        vcpkg_installation_root_exists = False
+    # vcpkg_installation_root = os.environ.get("VCPKG_INSTALLATION_ROOT")
+    # if vcpkg_installation_root:
+    #     vcpkg_installation_root_exists = os.path.exists(vcpkg_installation_root)
+    # else:
+    #     vcpkg_installation_root_exists = False
 
     # TODO(JCB)
     # * check of .vcpg?
     # * check USERPROFILE if can't find VC_ROOT?
 
     # TODO(JCB): NEW
-    if vcpkg_installation_root_exists:
-        env["VCPKG_INSTALLATION_ROOT"] = vcpkg_installation_root
+    #if vcpkg_installation_root_exists:
+    #    env["VCPKG_INSTALLATION_ROOT"] = vcpkg_installation_root
 
     # TODO(JCB): NEW
-    if vcpkg_root_exists:
-        env["VCPKG_ROOT"] = vcpkg_root
-    elif vcpkg_installation_root_exists:
-        env["VCPKG_ROOT"] = vcpkg_installation_root
+    #if vcpkg_root_exists:
+    #    env["VCPKG_ROOT"] = vcpkg_root
+    #elif vcpkg_installation_root_exists:
+    #    env["VCPKG_ROOT"] = vcpkg_installation_root
 
     psmodpath_dirs = [
         # TODO(JCB): only if "runneradmin"?
-        os.path.expandvars("%USERPROFILE%\\Documents\\WindowsPowerShell\\Modules"),
+        # os.path.expandvars("%USERPROFILE%\\Documents\\WindowsPowerShell\\Modules"),
         os.path.expandvars("%ProgramFiles%\\PowerShell\\Modules"),
         os.path.expandvars("%ProgramFiles%\\PowerShell\\7\\Modules"),
         os.path.expandvars("%ProgramFiles%\\WindowsPowerShell\\Modules"),

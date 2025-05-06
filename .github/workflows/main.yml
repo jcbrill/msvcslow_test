@@ -8,6 +8,7 @@ on:
     types: [opened, synchronize]
 
 env:
+  VCPKG_DISABLE_METRICS: 1
   VSCMD_SKIP_SENDTELEMETRY: 1
   SCONS_MSCOMMON_DEBUG: "-"
   # SCONS_CACHE_MSVC_CONFIG: 0
