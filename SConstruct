@@ -695,15 +695,15 @@ def test_environment(evar_list=None, force_dict=None):
         env["VCPKG_ROOT"] = vcpkg_installation_root
 
     psmodpath_dirs = [
-        p for p in [
-            # os.path.expandvars("%USERPROFILE%\\Documents\\WindowsPowerShell\\Modules"),
-            os.path.expandvars("%ProgramFiles%\\PowerShell\\Modules"),
-            os.path.expandvars("%ProgramFiles%\\PowerShell\\7\\Modules"),
-            os.path.expandvars("%ProgramFiles%\\WindowsPowerShell\\Modules"),
-            os.path.expandvars("%windir%\\System32\\WindowsPowerShell\\v1.0\\Modules"),
-        ]
-        if os.path.exists(p)
+        # TODO(JCB): only if "runneradmin"?
+        os.path.expandvars("%USERPROFILE%\\Documents\\WindowsPowerShell\\Modules"),
+        os.path.expandvars("%ProgramFiles%\\PowerShell\\Modules"),
+        os.path.expandvars("%ProgramFiles%\\PowerShell\\7\\Modules"),
+        os.path.expandvars("%ProgramFiles%\\WindowsPowerShell\\Modules"),
+        os.path.expandvars("%windir%\\System32\\WindowsPowerShell\\v1.0\\Modules"),
     ]
+
+    psmodpath_dirs = [p for p in psmodpath_dirs if os.path.exists(p)]
 
     # TODO(JCB): NEW
     if psmodpath_dirs:
