@@ -607,7 +607,6 @@ def _check_files_exist_in_vc_dir(vc_dir, msvc_version):
 _ENV = [
     'ComSpec',
     'OS',
-    'ProgramData',  # TODO(JCB): NEW
     'SystemDrive',
     'SystemRoot',
     'TEMP',
@@ -618,7 +617,7 @@ _ENV = [
     'windir',
 ]
 
-def scons_environment(evar_list=None, force_dict=None):
+def scons_environment():
     logging.debug("")
 
     env = {}
@@ -634,17 +633,6 @@ def scons_environment(evar_list=None, force_dict=None):
 
     env['PATH'] = os.pathsep.join([sys32_dir, sys32_wbem_dir, sys32_ps_dir])
     env['PATHEXT'] = '.COM;.EXE;.BAT;.CMD'
-
-    if evar_list:
-        for var in evar_list:
-            val = os.environ.get(var)
-            if not val:
-                continue
-            env[var] = val
-
-    if force_dict:
-        for var, val in force_dict.items():
-            env[var] = val
 
     logging.debug("env=%r", env)
     return env
@@ -978,12 +966,12 @@ _MODERN_ENV = [
     'ProgramW6432',
 ]
 
-_TEST_ENV = [  # TODO(JCB): NEW
-    'ProgramData',
-    'VCPKG_DISABLE_METRICS',
+_TEST_ENV = [
+    # 'ProgramData',  # TODO(JCB): NEW
+    'VCPKG_DISABLE_METRICS',  # TODO(JCB): NEW
 ]
 
-def test_environment(evar_list=None, force_dict=None):
+def test_environment():
     logging.debug("")
 
     env = {}
@@ -1006,16 +994,16 @@ def test_environment(evar_list=None, force_dict=None):
 
     syspath_dirs.extend([
         sys32_dir,
-        sysroot_dir,  # TODO(JCB): NEW
+        # sysroot_dir,  # TODO(JCB): NEW
         sys32_wbem_dir,
         sys32_ps_dir
     ])
 
     env['PATH'] = os.pathsep.join(syspath_dirs)
-    # env['PATHEXT'] = '.COM;.EXE;.BAT;.CMD'
+    env['PATHEXT'] = '.COM;.EXE;.BAT;.CMD'
 
     # TODO(JCB): NEW
-    env['PATHEXT'] = '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC'
+    # env['PATHEXT'] = '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC'
 
     # vcpkg_root = os.environ.get("VCPKG_ROOT")
     # if vcpkg_root:
@@ -1057,17 +1045,6 @@ def test_environment(evar_list=None, force_dict=None):
     # TODO(JCB): NEW
     if psmodpath_dirs:
         env["PSModulePath"] = os.pathsep.join(psmodpath_dirs)
-
-    if evar_list:
-        for var in evar_list:
-            val = os.environ.get(var)
-            if not val:
-                continue
-            env[var] = val
-
-    if force_dict:
-        for var, val in force_dict.items():
-            env[var] = val
 
     for key, val in env.items():
         logging.info("test_env[%s]=%s", key, val)
