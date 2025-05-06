@@ -56,6 +56,11 @@ DefaultEnvironment(tools=[])
 
 TEST_VCVARS = False
 
+# TEST_NEWENV = True:  modified environment
+# TEST_NEWENV = False: scons environment
+
+TEST_NEWENV = False
+
 _EXT_ITERATIONS = 5
 _EXT_ELAPSED_TOLERANCE = 1.0
 
@@ -787,7 +792,6 @@ def _check_cl_exists_in_script_env(data):
 def script_env(script, args=None, force_env=None):
     logging.debug("enter")
 
-    # TODO(JCB)
     # skip_sendtelemetry = _skip_sendtelemetry(env)
 
     skip_sendtelemetry = False
@@ -951,23 +955,7 @@ def get_installed_vcs(msvc_map):
 #     C:\Windows\system32\WindowsPowerShell\v1.0\Modules
 #     C:\Program Files\Microsoft SQL Server\130\Tools\PowerShell\Modules\
 
-# TODO(JCB): NOT USED
-_MODERN_ENV = [
-    'CommonProgramFiles',
-    'CommonProgramFiles(arm)',
-    'CommonProgramFiles(x86)',
-    'CommonProgramW6432',
-    'PROCESSOR_ARCHITECTURE',
-    'PROCESSOR_ARCHITEW6432',
-    'ProgramData',
-    'ProgramFiles',
-    'ProgramFiles(arm)',
-    'ProgramFiles(x86)',
-    'ProgramW6432',
-]
-
 _TEST_ENV = [
-    # 'ProgramData',  # TODO(JCB): NEW
     'VCPKG_DISABLE_METRICS',  # TODO(JCB): NEW
 ]
 
@@ -981,29 +969,29 @@ def test_environment():
             continue
         env[var] = val
 
-    syspath_dirs = []
-
-    progfiles_ps_dir = os.path.expandvars("%ProgramFiles%\\PowerShell\\7")
-    if os.path.exists(progfiles_ps_dir):
-        syspath_dirs.append(progfiles_ps_dir)  # TODO(JCB): NEW
-
-    sysroot_dir = env['SystemRoot']
-    sys32_dir = os.path.join(sysroot_dir, 'System32')
+    sys32_dir = os.path.join(env['SystemRoot'], 'System32')
     sys32_wbem_dir = os.path.join(sys32_dir, 'Wbem')
+    progfiles_ps_dir = os.path.expandvars("%ProgramFiles%\\PowerShell\\7")
     sys32_ps_dir = os.path.join(sys32_dir, 'WindowsPowerShell', 'v1.0')
 
-    syspath_dirs.extend([
+    syspath_dirs = [
         sys32_dir,
-        # sysroot_dir,  # TODO(JCB): NEW
         sys32_wbem_dir,
-        sys32_ps_dir
-    ])
+        progfiles_ps_dir,  # TODO(JCB): NEW
+        sys32_ps_dir,
+    ]
 
     env['PATH'] = os.pathsep.join(syspath_dirs)
     env['PATHEXT'] = '.COM;.EXE;.BAT;.CMD'
 
-    # TODO(JCB): NEW
-    # env['PATHEXT'] = '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC'
+    psmodpath_dirs = [
+        os.path.expandvars("%ProgramFiles%\\PowerShell\\Modules"),
+        os.path.expandvars("%ProgramFiles%\\PowerShell\\7\\Modules"),
+        os.path.expandvars("%ProgramFiles%\\WindowsPowerShell\\Modules"),
+        os.path.expandvars("%windir%\\System32\\WindowsPowerShell\\v1.0\\Modules"),
+    ]
+
+    env["PSModulePath"] = os.pathsep.join(psmodpath_dirs)  # TODO(JCB): NEW
 
     # vcpkg_root = os.environ.get("VCPKG_ROOT")
     # if vcpkg_root:
@@ -1017,34 +1005,16 @@ def test_environment():
     # else:
     #     vcpkg_installation_root_exists = False
 
-    # TODO(JCB)
-    # * check of .vcpg?
+    # * check of .vcpg-root?
     # * check USERPROFILE if can't find VC_ROOT?
 
-    # TODO(JCB): NEW
     #if vcpkg_installation_root_exists:
     #    env["VCPKG_INSTALLATION_ROOT"] = vcpkg_installation_root
 
-    # TODO(JCB): NEW
     #if vcpkg_root_exists:
     #    env["VCPKG_ROOT"] = vcpkg_root
     #elif vcpkg_installation_root_exists:
     #    env["VCPKG_ROOT"] = vcpkg_installation_root
-
-    psmodpath_dirs = [
-        # TODO(JCB): only if "runneradmin"?
-        # os.path.expandvars("%USERPROFILE%\\Documents\\WindowsPowerShell\\Modules"),
-        os.path.expandvars("%ProgramFiles%\\PowerShell\\Modules"),
-        os.path.expandvars("%ProgramFiles%\\PowerShell\\7\\Modules"),
-        os.path.expandvars("%ProgramFiles%\\WindowsPowerShell\\Modules"),
-        os.path.expandvars("%windir%\\System32\\WindowsPowerShell\\v1.0\\Modules"),
-    ]
-
-    psmodpath_dirs = [p for p in psmodpath_dirs if os.path.exists(p)]
-
-    # TODO(JCB): NEW
-    if psmodpath_dirs:
-        env["PSModulePath"] = os.pathsep.join(psmodpath_dirs)
 
     for key, val in env.items():
         logging.info("test_env[%s]=%s", key, val)
@@ -1085,11 +1055,10 @@ def msvc_default_version():
 
 def test_ext_scripts(vc_installed):
     logging.debug("")
-    env_list = [
-        ("scons", scons_environment()),
-        # ("test", test_environment()),
-    ]
-    # vc_script = find_batch_file(vc_installed.vc_version, host_arch, target_arch, vc_installed.vc_dir)
+    if TEST_NEWENV:
+        env_list = [("test", test_environment())]
+    else:
+        env_list = [("scons", scons_environment())]
     vs_root = os.path.split(vc_installed.vc_dir)[0]
     vs_tools = os.path.join(vs_root, "Common7", "Tools")
     vs_vsdevcmd = os.path.join(vs_tools, "vsdevcmd")
