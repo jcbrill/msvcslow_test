@@ -1065,8 +1065,8 @@ def dev_environment():
 
     psmodpath_dirs = [
         r"C:\Users\runneradmin\Documents\PowerShell\Modules",
-        r"C:\Program Files\PowerShell\Modules",
-        r"c:\program files\powershell\7\Modules", 
+        # r"C:\Program Files\PowerShell\Modules",
+        # r"c:\program files\powershell\7\Modules", 
         r"C:\\Modules\az_12.4.0",
         r"C:\Users\packer\Documents\WindowsPowerShell\Modules",
         r"C:\Program Files\WindowsPowerShell\Modules",
