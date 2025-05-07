@@ -59,6 +59,7 @@ TEST_VCVARS = True
 # TEST_NEWENV = True:  modified environment
 # TEST_NEWENV = False: scons environment
 
+TEST_DEVENV = True
 TEST_NEWENV = True
 
 _EXT_ITERATIONS = 5
@@ -610,13 +611,15 @@ def _check_files_exist_in_vc_dir(vc_dir, msvc_version):
     return host_target_list
 
 _ENV = [
-    'ComSpec',
-    'OS',
+    # Platform/win32
     'SystemDrive',
     'SystemRoot',
     'TEMP',
     'TMP',
     'USERPROFILE',
+    # SCons/Tool/MSCommon/common
+    'ComSpec',
+    'OS',
     'VSCMD_DEBUG',
     'VSCMD_SKIP_SENDTELEMETRY',
     'windir',
@@ -981,6 +984,7 @@ def get_installed_vcs(msvc_map):
 
 _TEST_ENV = [
     'VCPKG_DISABLE_METRICS',  # TODO(JCB): NEW
+    'VCPKG_ROOT',  # TODO(JCB): NEW
 ]
 
 def test_environment():
@@ -1011,6 +1015,48 @@ def test_environment():
     psmodpath_dirs = [
         os.path.expandvars("%ProgramFiles%\\PowerShell\\Modules"),
         os.path.expandvars("%ProgramFiles%\\PowerShell\\7\\Modules"),
+        os.path.expandvars("%ProgramFiles%\\WindowsPowerShell\\Modules"),
+        os.path.expandvars("%windir%\\System32\\WindowsPowerShell\\v1.0\\Modules"),
+    ]
+
+    env["PSModulePath"] = os.pathsep.join(psmodpath_dirs)  # TODO(JCB): NEW
+
+    logging.debug("env=%r", env)
+    return env
+
+_DEV_ENV = [
+    'VCPKG_DISABLE_METRICS',  # TODO(JCB): NEW
+    # 'VCPKG_ROOT',  # TODO(JCB): NEW
+]
+
+def dev_environment():
+    logging.debug("")
+
+    env = {}
+    for var in _ENV + _DEV_ENV:
+        val = os.environ.get(var)
+        if not val:
+            continue
+        env[var] = val
+
+    sys32_dir = os.path.join(env['SystemRoot'], 'System32')
+    sys32_wbem_dir = os.path.join(sys32_dir, 'Wbem')
+    progfiles_ps_dir = os.path.expandvars("%ProgramFiles%\\PowerShell\\7")
+    sys32_ps_dir = os.path.join(sys32_dir, 'WindowsPowerShell', 'v1.0')
+
+    syspath_dirs = [
+        sys32_dir,
+        sys32_wbem_dir,
+        # progfiles_ps_dir,  # TODO(JCB): NEW
+        sys32_ps_dir,
+    ]
+
+    env['PATH'] = os.pathsep.join(syspath_dirs)
+    env['PATHEXT'] = '.COM;.EXE;.BAT;.CMD'
+
+    psmodpath_dirs = [
+        # os.path.expandvars("%ProgramFiles%\\PowerShell\\Modules"),
+        # os.path.expandvars("%ProgramFiles%\\PowerShell\\7\\Modules"),
         os.path.expandvars("%ProgramFiles%\\WindowsPowerShell\\Modules"),
         os.path.expandvars("%windir%\\System32\\WindowsPowerShell\\v1.0\\Modules"),
     ]
@@ -1102,7 +1148,9 @@ def test_ext_scripts(vc_installed):
 
 def test_scons(vc_installed):
     logging.debug("")
-    if TEST_NEWENV:
+    if TEST_DEVENV:
+        env = dev_environment()
+    elif TEST_NEWENV:
         env = test_environment()
     else:
         env = scons_environment()
