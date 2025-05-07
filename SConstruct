@@ -1064,8 +1064,8 @@ def dev_environment():
     env["PSModulePath"] = os.pathsep.join(psmodpath_dirs)  # TODO(JCB): NEW
 
     psmodpath_dirs = [
-        r"C:\Program Files\PowerShell\Modules",
-        r"c:\program files\powershell\7\Modules", 
+        # r"C:\Program Files\PowerShell\Modules",
+        # r"c:\program files\powershell\7\Modules", 
         r"C:\Program Files\WindowsPowerShell\Modules",
         r"C:\Windows\system32\WindowsPowerShell\v1.0\Modules",
     ]
