@@ -1062,6 +1062,7 @@ def dev_environment():
     ]
 
     env["PSModulePath"] = os.pathsep.join(psmodpath_dirs)  # TODO(JCB): NEW
+
     psmodpath_dirs = [
         r"C:\Users\runneradmin\Documents\PowerShell\Modules",
         r"C:\Program Files\PowerShell\Modules",
@@ -1073,7 +1074,7 @@ def dev_environment():
         r"C:\Program Files\Microsoft SQL Server\130\Tools\PowerShell\Modules\\",
     ]
     
-    env["PSModulePath"] = os.path.join(psmodpath_dirs)
+    env["PSModulePath"] = os.pathsep.join(psmodpath_dirs)
 
     logging.debug("env=%r", env)
     return env
