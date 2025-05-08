@@ -62,12 +62,14 @@ TEST_VCVARS = True
 TEST_DEVENV = True
 TEST_NEWENV = True
 
+_SCONS_ITERATIONS = 2
+
 _EXT_ITERATIONS = 5
 _EXT_ELAPSED_TOLERANCE = 1.0
 
 ### SCons Modified Source Code Begin
 
-LOGLEVEL = logging.INFO
+LOGLEVEL = logging.DEBUG
 
 UNDEFINED = object()
 
@@ -1156,7 +1158,8 @@ def test_scons(vc_installed):
         env = scons_environment()
     for key, val in env.items():
         logging.info('env[%s]=%s', key, val)
-    _ = msvc_find_valid_batch_script(vc_installed, force_env=env)
+    for call_num in range(_SCONS_ITERATIONS):
+        _ = msvc_find_valid_batch_script(vc_installed, force_env=env)
     logging.debug("")
 
 def msvc_default_invocation(func_list):
