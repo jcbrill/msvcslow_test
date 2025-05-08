@@ -1085,7 +1085,7 @@ def test_environment():
 
 _DEV_ENV = [
     'VCPKG_DISABLE_METRICS',  # TODO(JCB): NEW
-    # 'VCPKG_ROOT',  # TODO(JCB): NEW
+    'VCPKG_ROOT',  # TODO(JCB): NEW
 ]
 
 def dev_environment(powershell_cfg=None):
