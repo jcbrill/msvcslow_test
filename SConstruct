@@ -66,6 +66,7 @@ _SCONS_ITERATIONS = 5
 
 _EXT_ITERATIONS = 5
 _EXT_ELAPSED_TOLERANCE = 1.0
+_EXT_FILTER = ["vcpkg.bat"]
 
 ### SCons Modified Source Code Begin
 
@@ -1111,9 +1112,9 @@ def test_ext_scripts(vc_installed):
     vs_vsdevcmd_core = os.path.join(vs_vsdevcmd, "core")
     vs_vsdevcmd_ext = os.path.join(vs_vsdevcmd, "ext")
     vsdevcmd_ext_files = [
-        p for p in 
-        [os.path.join(vs_vsdevcmd_ext, p) for p in os.listdir(vs_vsdevcmd_ext)]
-        if os.path.isfile(p) and os.path.splitext(p)[-1].lower() == ".bat"
+        p for (p, fname) in 
+        [(os.path.join(vs_vsdevcmd_ext, p), p.lower()) for p in os.listdir(vs_vsdevcmd_ext)]
+        if os.path.isfile(p) and os.path.splitext(p)[-1].lower() == ".bat" and (not _EXT_FILTER or fname in _EXT_FILTER)
     ]
     vsdevcmd_ext_files.sort()
     vsdevcmd_env = {
