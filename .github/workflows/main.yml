@@ -18,8 +18,8 @@ jobs:
   build:
     strategy:
       matrix:
-        # os: [windows-latest]
-        os: [windows-2019]
+        os: [windows-latest]
+        # os: [windows-2019]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -28,8 +28,8 @@ jobs:
         run: pip install scons
 
       - name: set cache key for SCons MSVC Cache
-        # if: ${{ matrix.os == 'windows-latest' }}
-        if: ${{ matrix.os == 'windows-2019' }}
+        if: ${{ matrix.os == 'windows-latest' }}
+        # if: ${{ matrix.os == 'windows-2019' }}
         shell: bash
         run: echo "SCONS_CACHE_KEY=${RUNNER_OS}-${ImageVersion}" >> $GITHUB_ENV
 
