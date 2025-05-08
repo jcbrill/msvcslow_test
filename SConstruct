@@ -67,7 +67,9 @@ _SCONS_ITERATIONS = 5
 
 _EXT_ITERATIONS = 5
 _EXT_ELAPSED_TOLERANCE = 1.0
-_EXT_FILTER = ["vcpkg.bat"]
+_EXT_SKIP = ["vcpkg.bat"]
+_EXT_BATFILE_SKIP = ["vcvars.bat"]
+_EXT_BATFILE_RUN = ["vcpkg.bat"]
 
 class Powershell(enum.IntEnum):
     PATH_5_MODULEPATH_5  = 1
@@ -1177,23 +1179,22 @@ def msvc_default_version():
     logging.info("default_version=%r", default_version)
     return default_version
 
-def test_ext_scripts(vc_installed):
+def _test_ext_scripts(vc_installed, powershell_cfg=None):
     logging.debug("")
-    if TEST_NEWENV:
-        env_list = [("test", test_environment())]
-    else:
-        env_list = [("scons", scons_environment())]
+
     vs_root = os.path.split(vc_installed.vc_dir)[0]
     vs_tools = os.path.join(vs_root, "Common7", "Tools")
     vs_vsdevcmd = os.path.join(vs_tools, "vsdevcmd")
     vs_vsdevcmd_core = os.path.join(vs_vsdevcmd, "core")
     vs_vsdevcmd_ext = os.path.join(vs_vsdevcmd, "ext")
+
     vsdevcmd_ext_files = [
         p for (p, fname) in 
         [(os.path.join(vs_vsdevcmd_ext, p), p.lower()) for p in os.listdir(vs_vsdevcmd_ext)]
-        if os.path.isfile(p) and os.path.splitext(p)[-1].lower() == ".bat" and (not _EXT_FILTER or fname in _EXT_FILTER)
+        if os.path.isfile(p) and os.path.splitext(p)[-1].lower() == ".bat"
     ]
     vsdevcmd_ext_files.sort()
+
     vsdevcmd_env = {
         "DevEnvDir": os.path.join(vs_root, "Common7", "IDE") + "\\",
         "VCIDEINSTALLDIR": os.path.join(vs_root, "Common7", "IDE", "VC") + "\\",
@@ -1206,39 +1207,61 @@ def test_ext_scripts(vc_installed):
         "VSCMD_SKIP_SENDTELEMETRY": "1",
         "VSCMD_VER": "17.0",
     }
-    for label, baseenv in env_list:
-        env = dict(baseenv)
-        for key, val in vsdevcmd_env.items():
-            if key in env:
-                continue
-            env[key] = val
-        for key, val in env.items():
-            logging.info('env[%s]=%s', key, val)
-        for batfile in vsdevcmd_ext_files:
-            filename = os.path.split(batfile)[-1]
-            if filename.lower() in ("vcvars.bat",):
-                continue
-            for call_num in range(_EXT_ITERATIONS):
-                data, elapsed_time = script_env(batfile, force_env=env)
-                if elapsed_time > _EXT_ELAPSED_TOLERANCE:
-                    logging.warning("!!! ELAPSED_TIME=%.2f, envkind=%s, script=%r !!!", elapsed_time, label, batfile)
-                else:
-                    logging.info("ELAPSED_TIME=%.2f, envkind=%s, callnum=%d, script=%r", elapsed_time, label, call_num, batfile)
+
+    if TEST_DEVENV:
+        env = dev_environment(powershell_cfg)
+    elif TEST_NEWENV:
+        env = test_environment()
+    else:
+        env = scons_environment()
+
+    for key, val in vsdevcmd_env.items():
+        if key in env:
+            continue
+        env[key] = val
+
+    for key, val in env.items():
+        logging.info('env[%s]=%s', key, val)
+
+    for batfile in vsdevcmd_ext_files:
+        filename = os.path.split(batfile)[-1]
+        filename_key = filename.lower()
+        if filename_key in _EXT_BATFILE_SKIP:
+            continue
+        if _EXT_BATFILE_RUN and filename_key not in _EXT_BATFILE_RUN:
+            continue
+        for call_num in range(_EXT_ITERATIONS):
+            data, elapsed_time = script_env(batfile, force_env=env)
+            if elapsed_time > _EXT_ELAPSED_TOLERANCE:
+                logging.warning("!!! ELAPSED_TIME=%.2f, envkind=%s, script=%r !!!", elapsed_time, label, batfile)
+            else:
+                logging.info("ELAPSED_TIME=%.2f, envkind=%s, callnum=%d, script=%r", elapsed_time, label, call_num, batfile)
+    logging.debug("")
+
+def test_ext_scripts(vc_installed):
+    logging.debug("")
+    for powershell_cfg in Powershell:
+        _test_ext_scripts(vc_installed, powershell_cfg=powershell_cfg)
+    logging.debug("")
+
+def _test_scons(vc_installed, powershell_cfg=None):
+    logging.debug("")
+    if TEST_DEVENV:
+        env = dev_environment(powershell_cfg)
+    elif TEST_NEWENV:
+        env = test_environment()
+    else:
+        env = scons_environment()
+    for key, val in env.items():
+        logging.info('env[%s]=%s', key, val)
+    for call_num in range(_SCONS_ITERATIONS):
+        _ = msvc_find_valid_batch_script(vc_installed, force_env=env)
     logging.debug("")
 
 def test_scons(vc_installed):
     logging.debug("")
     for powershell_cfg in Powershell:
-        if TEST_DEVENV:
-            env = dev_environment(powershell_cfg)
-        elif TEST_NEWENV:
-            env = test_environment()
-        else:
-            env = scons_environment()
-        for key, val in env.items():
-            logging.info('env[%s]=%s', key, val)
-        for call_num in range(_SCONS_ITERATIONS):
-            _ = msvc_find_valid_batch_script(vc_installed, force_env=env)
+        _test_scons(vc_installed, powershell_cfg=powershell_cfg)
     logging.debug("")
 
 def msvc_default_invocation(func_list):
