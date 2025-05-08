@@ -55,7 +55,7 @@ DefaultEnvironment(tools=[])
 # TEST_VCVARS = True:  run vcvars batch file
 # TEST_VCVARS = False: run ext dir batch files
 
-TEST_VCVARS = True
+TEST_VCVARS = False
 
 # TEST_NEWENV = True:  modified environment
 # TEST_NEWENV = False: scons environment
@@ -120,7 +120,9 @@ PSMODULEPATH_UNDEF_OS = {
     Powershell.PATH_7_MODULEPATH_NA: True,
 }
 
-DEV_POWERSHELL_CFG = Powershell.PATH_5_MODULEPATH_5
+DEV_POWERSHELL_CFG = Powershell.PATH_7_MODULEPATH_NA
+
+_ALL_POWERSHELL_CFG = False
 
 ### SCons Modified Source Code Begin
 
@@ -1238,12 +1240,6 @@ def _test_ext_scripts(vc_installed, powershell_cfg=None):
                 logging.info("ELAPSED_TIME=%.2f, envkind=%r, callnum=%d, script=%r", elapsed_time, powershell_cfg, call_num, batfile)
     logging.debug("")
 
-def test_ext_scripts(vc_installed):
-    logging.debug("")
-    for powershell_cfg in Powershell:
-        _test_ext_scripts(vc_installed, powershell_cfg=powershell_cfg)
-    logging.debug("")
-
 def _test_scons(vc_installed, powershell_cfg=None):
     logging.debug("")
     if TEST_DEVENV:
@@ -1258,10 +1254,22 @@ def _test_scons(vc_installed, powershell_cfg=None):
         _ = msvc_find_valid_batch_script(vc_installed, force_env=env)
     logging.debug("")
 
+def test_ext_scripts(vc_installed):
+    logging.debug("")
+    if _ALL_POWERSHELL_CFG:
+        for powershell_cfg in Powershell:
+            _test_ext_scripts(vc_installed, powershell_cfg=powershell_cfg)
+    else:
+        _test_ext_scripts(vc_installed, powershell_cfg=DEV_POWERSHELL_CFG)
+    logging.debug("")
+
 def test_scons(vc_installed):
     logging.debug("")
-    for powershell_cfg in Powershell:
-        _test_scons(vc_installed, powershell_cfg=powershell_cfg)
+    if _ALL_POWERSHELL_CFG:
+        for powershell_cfg in Powershell:
+            _test_scons(vc_installed, powershell_cfg=powershell_cfg)
+    else:
+        _test_scons(vc_installed, powershell_cfg=DEV_POWERSHELL_CFG)
     logging.debug("")
 
 def msvc_default_invocation(func_list):
