@@ -1055,8 +1055,8 @@ def dev_environment():
     env['PATHEXT'] = '.COM;.EXE;.BAT;.CMD'
 
     psmodpath_dirs = [
-        # os.path.expandvars("%ProgramFiles%\\PowerShell\\Modules"),
-        # os.path.expandvars("%ProgramFiles%\\PowerShell\\7\\Modules"),
+        os.path.expandvars("%ProgramFiles%\\PowerShell\\Modules"),
+        os.path.expandvars("%ProgramFiles%\\PowerShell\\7\\Modules"),
         os.path.expandvars("%ProgramFiles%\\WindowsPowerShell\\Modules"),
         os.path.expandvars("%windir%\\System32\\WindowsPowerShell\\v1.0\\Modules"),
     ]
