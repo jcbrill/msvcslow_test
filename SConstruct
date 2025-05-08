@@ -1047,7 +1047,7 @@ def dev_environment():
     syspath_dirs = [
         sys32_dir,
         sys32_wbem_dir,
-        # progfiles_ps_dir,
+        progfiles_ps_dir,
         sys32_ps_dir,
     ]
 
