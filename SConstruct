@@ -1233,9 +1233,9 @@ def _test_ext_scripts(vc_installed, powershell_cfg=None):
         for call_num in range(_EXT_ITERATIONS):
             data, elapsed_time = script_env(batfile, force_env=env)
             if elapsed_time > _EXT_ELAPSED_TOLERANCE:
-                logging.warning("!!! ELAPSED_TIME=%.2f, envkind=%s, script=%r !!!", elapsed_time, label, batfile)
+                logging.warning("!!! ELAPSED_TIME=%.2f, envkind=%r, callnum=%d, script=%r !!!", elapsed_time, powershell_cfg, call_num, batfile)
             else:
-                logging.info("ELAPSED_TIME=%.2f, envkind=%s, callnum=%d, script=%r", elapsed_time, label, call_num, batfile)
+                logging.info("ELAPSED_TIME=%.2f, envkind=%r, callnum=%d, script=%r", elapsed_time, powershell_cfg, call_num, batfile)
     logging.debug("")
 
 def test_ext_scripts(vc_installed):
