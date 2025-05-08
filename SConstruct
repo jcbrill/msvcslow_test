@@ -35,6 +35,7 @@
 #
 # The logging output file is the only file written from the SConstruct file.
 
+import enum
 import json
 import logging
 import os
@@ -67,6 +68,57 @@ _SCONS_ITERATIONS = 5
 _EXT_ITERATIONS = 5
 _EXT_ELAPSED_TOLERANCE = 1.0
 _EXT_FILTER = ["vcpkg.bat"]
+
+class Powershell(enum.IntEnum):
+    PATH_5_MODULEPATH_5  = 1
+    PATH_5_MODULEPATH_75 = 2
+    PATH_5_MODULEPATH_OS = 3
+    PATH_5_MODULEPATH_NA = 4
+    PATH_7_MODULEPATH_75 = 5
+    PATH_7_MODULEPATH_OS = 6
+    PATH_7_MODULEPATH_NA = 7
+
+PATH_ADD_PS7 = {
+    Powershell.PATH_5_MODULEPATH_5:  False,
+    Powershell.PATH_5_MODULEPATH_75: False,
+    Powershell.PATH_5_MODULEPATH_OS: False,
+    Powershell.PATH_5_MODULEPATH_NA: False,
+    Powershell.PATH_7_MODULEPATH_75: True,
+    Powershell.PATH_7_MODULEPATH_OS: True,
+    Powershell.PATH_7_MODULEPATH_NA: True,
+}
+
+PSMODULEPATH_ADD_PS7 = {
+    Powershell.PATH_5_MODULEPATH_5:  False,
+    Powershell.PATH_5_MODULEPATH_75: True,
+    Powershell.PATH_5_MODULEPATH_OS: False,
+    Powershell.PATH_5_MODULEPATH_NA: False,
+    Powershell.PATH_7_MODULEPATH_75: True,
+    Powershell.PATH_7_MODULEPATH_OS: False,
+    Powershell.PATH_7_MODULEPATH_NA: False,
+}
+
+PSMODULEPATH_FORCE_OS = {
+    Powershell.PATH_5_MODULEPATH_5:  False,
+    Powershell.PATH_5_MODULEPATH_75: False,
+    Powershell.PATH_5_MODULEPATH_OS: True,
+    Powershell.PATH_5_MODULEPATH_NA: False,
+    Powershell.PATH_7_MODULEPATH_75: False,
+    Powershell.PATH_7_MODULEPATH_OS: True,
+    Powershell.PATH_7_MODULEPATH_NA: False,
+}
+
+PSMODULEPATH_UNDEF_OS = {
+    Powershell.PATH_5_MODULEPATH_5:  False,
+    Powershell.PATH_5_MODULEPATH_75: False,
+    Powershell.PATH_5_MODULEPATH_OS: False,
+    Powershell.PATH_5_MODULEPATH_NA: True,
+    Powershell.PATH_7_MODULEPATH_75: False,
+    Powershell.PATH_7_MODULEPATH_OS: False,
+    Powershell.PATH_7_MODULEPATH_NA: True,
+}
+
+DEV_POWERSHELL_CFG = Powershell.PATH_5_MODULEPATH_5
 
 ### SCons Modified Source Code Begin
 
@@ -1032,8 +1084,12 @@ _DEV_ENV = [
     # 'VCPKG_ROOT',  # TODO(JCB): NEW
 ]
 
-def dev_environment():
-    logging.debug("")
+def dev_environment(powershell_cfg=None):
+
+    if powershell_cfg is None:
+        powershell_cfg = DEV_POWERSHELL_CFG
+         
+    logging.debug("powershell_cfg=%r", powershell_cfg)
 
     env = {}
     for var in _ENV + _DEV_ENV:
@@ -1047,24 +1103,45 @@ def dev_environment():
     progfiles_ps_dir = os.path.expandvars("%ProgramFiles%\\PowerShell\\7")
     sys32_ps_dir = os.path.join(sys32_dir, 'WindowsPowerShell', 'v1.0')
 
-    syspath_dirs = [
-        sys32_dir,
-        sys32_wbem_dir,
-        progfiles_ps_dir,
-        sys32_ps_dir,
-    ]
+        
+    if PATH_ADD_PS7[powershell_cfg]:
+        syspath_dirs = [
+            sys32_dir,
+            sys32_wbem_dir,
+            progfiles_ps_dir,
+            sys32_ps_dir,
+        ]
+    else:
+        syspath_dirs = [
+            sys32_dir,
+            sys32_wbem_dir,
+            sys32_ps_dir,
+        ]
 
     env['PATH'] = os.pathsep.join(syspath_dirs)
     env['PATHEXT'] = '.COM;.EXE;.BAT;.CMD'
 
-    psmodpath_dirs = [
-        os.path.expandvars("%ProgramFiles%\\PowerShell\\Modules"),
-        os.path.expandvars("%ProgramFiles%\\PowerShell\\7\\Modules"),
-        os.path.expandvars("%ProgramFiles%\\WindowsPowerShell\\Modules"),
-        os.path.expandvars("%windir%\\System32\\WindowsPowerShell\\v1.0\\Modules"),
-    ]
+    if PSMODULEPATH_UNDEF_OS[powershell_cfg]:
+        psmodulepath = ""
+    elif PSMODULEPATH_FORCE_OS[powershell_cfg]:
+        psmodulepath = os.environ.get("PSModulePath","")
+    elif PSMODULEPATH_ADD_PS7[powershell_cfg]:
+        psmodpath_dirs = [
+            os.path.expandvars("%ProgramFiles%\\PowerShell\\Modules"),
+            os.path.expandvars("%ProgramFiles%\\PowerShell\\7\\Modules"),
+            os.path.expandvars("%ProgramFiles%\\WindowsPowerShell\\Modules"),
+            os.path.expandvars("%windir%\\System32\\WindowsPowerShell\\v1.0\\Modules"),
+        ]
+        psmodulepath = os.pathsep.join(psmodpath_dirs)
+    else:
+        psmodpath_dirs = [
+            os.path.expandvars("%ProgramFiles%\\WindowsPowerShell\\Modules"),
+            os.path.expandvars("%windir%\\System32\\WindowsPowerShell\\v1.0\\Modules"),
+        ]
+        psmodulepath = os.pathsep.join(psmodpath_dirs)
 
-    env["PSModulePath"] = os.pathsep.join(psmodpath_dirs)
+    if psmodulepath:
+        env["PSModulePath"] = psmodulepath
 
     logging.debug("env=%r", env)
     return env
@@ -1151,16 +1228,17 @@ def test_ext_scripts(vc_installed):
 
 def test_scons(vc_installed):
     logging.debug("")
-    if TEST_DEVENV:
-        env = dev_environment()
-    elif TEST_NEWENV:
-        env = test_environment()
-    else:
-        env = scons_environment()
-    for key, val in env.items():
-        logging.info('env[%s]=%s', key, val)
-    for call_num in range(_SCONS_ITERATIONS):
-        _ = msvc_find_valid_batch_script(vc_installed, force_env=env)
+    for powershell_cfg in Powershell:
+        if TEST_DEVENV:
+            env = dev_environment(powershell_cfg)
+        elif TEST_NEWENV:
+            env = test_environment()
+        else:
+            env = scons_environment()
+        for key, val in env.items():
+            logging.info('env[%s]=%s', key, val)
+        for call_num in range(_SCONS_ITERATIONS):
+            _ = msvc_find_valid_batch_script(vc_installed, force_env=env)
     logging.debug("")
 
 def msvc_default_invocation(func_list):
