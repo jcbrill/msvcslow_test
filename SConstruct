@@ -69,7 +69,7 @@ _EXT_ELAPSED_TOLERANCE = 1.0
 
 ### SCons Modified Source Code Begin
 
-LOGLEVEL = logging.DEBUG
+LOGLEVEL = logging.INFO
 
 UNDEFINED = object()
 
