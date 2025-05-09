@@ -796,9 +796,11 @@ KEEPLIST = (
     "LIBPATH",
     "PATH",
     "VSCMD_ARG_app_plat",
+    "VSCMD_SKIP_SENDTELEMETRY",  # JCB: need to add to SCons?
     "VCINSTALLDIR",  # needed by clang -VS 2017 and newer
     "VCToolsInstallDir",  # needed by clang - VS 2015 and older
-    "VSCMD_SKIP_SENDTELEMETRY",  # JCB: need to add to SCons?
+	"VCPKG_DISABLE_METRICS", # JCB: need to add to SCons?
+	"VCPKG_ROOT", # JCB: need to add to SCons?
 )
 
 def parse_output(output, keep=KEEPLIST):
