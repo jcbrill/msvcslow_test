@@ -1161,13 +1161,13 @@ def log_environ():
 def log_vcpkg_roots(osvars, paths=None):
     logging.debug("")
     vcpkg_paths = []
+    if paths:
+        vcpkg_paths.extend(paths)
     for var in osvars:
         val = os.environ.get(var)
         if not val:
             continue
         vcpkg_paths.append(val)
-    if paths:
-        vcpkg_paths.extend(paths)
     for p in vcpkg_paths:
         vcpkgrootpath = os.path.join(os.path.normpath(p), ".vcpkg-root")
         logging.info("vcpkgroot_path=%s, exists=%r", vcpkgrootpath, os.path.exists(vcpkgrootpath))
