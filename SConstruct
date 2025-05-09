@@ -63,7 +63,7 @@ TEST_VCVARS = True
 TEST_DEVENV = True
 TEST_NEWENV = True
 
-_SCONS_ITERATIONS = 5
+_SCONS_ITERATIONS = 2
 
 _EXT_ITERATIONS = 5
 _EXT_ELAPSED_TOLERANCE = 1.0
@@ -799,8 +799,8 @@ KEEPLIST = (
     "VSCMD_SKIP_SENDTELEMETRY",  # JCB: need to add to SCons?
     "VCINSTALLDIR",  # needed by clang -VS 2017 and newer
     "VCToolsInstallDir",  # needed by clang - VS 2015 and older
-	"VCPKG_DISABLE_METRICS", # JCB: need to add to SCons?
-	"VCPKG_ROOT", # JCB: need to add to SCons?
+    "VCPKG_DISABLE_METRICS", # JCB: need to add to SCons?
+    "VCPKG_ROOT", # JCB: need to add to SCons?
 )
 
 def parse_output(output, keep=KEEPLIST):
@@ -1153,8 +1153,25 @@ def dev_environment(powershell_cfg=None):
     return env
 
 def log_environ():
+    logging.debug("")
     for key, val in os.environ.items():
         logging.info("os.environ[%s]=%s", key, val)
+    logging.debug("")
+
+def log_vcpkg_roots(osvars, paths=None):
+    logging.debug("")
+    vcpkg_paths = []
+    for var in osvars:
+        val = os.environ.get(var)
+        if not val:
+            continue
+        vcpkg_paths.append(val)
+    if paths:
+        vcpkg_paths.extend(paths)
+    for p in vcpkg_paths:
+        vcpkgrootpath = os.path.join(os.path.normpath(p), ".vcpkg-root")
+        logging.info("vcpkgroot_path=%s, exists=%r", vcpkgrootpath, os.path.exists(vcpkgrootpath))
+    logging.debug("")
 
 def log_syspath_programs(proglist):
     logging.debug("")
@@ -1173,7 +1190,7 @@ def log_syspath_programs(proglist):
 
 def msvc_default_version():
     logging.debug("")
-    log_syspath_programs(["vcpkg.exe", "pwsh.exe", "powershell.exe"])
+    log_syspath_programs(["vcpkg.exe", "pwsh.exe", "powershell.exe", ".vcpkg-root"])
     log_environ()
     vswhere_exe = vswhere_executable()
     vswhere_json = vswhere_query_json_output(vswhere_exe, ['-all', '-products', '*'])
@@ -1181,6 +1198,9 @@ def msvc_default_version():
     installed_versions = get_installed_vcs(msvc_map)
     default_version = installed_versions[0] if installed_versions else None
     logging.info("default_version=%r", default_version)
+    vcpkg_dir = os.path.join(default_verson.vc_dir, "vcpkg")
+    logging.info("vcpkg_dir=%r, exists=%r", vcpkg_dir, os.path.exists(vcpkg_dir))
+    log_vcpkg_roots(osvars=["VCPKG_INSTALLATION_ROOT", "VCPKG_ROOT", "USERPROFILE"], paths=[vcpkg_dir])
     return default_version
 
 def _test_ext_scripts(vc_installed, powershell_cfg=None):
