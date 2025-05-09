@@ -833,7 +833,7 @@ def parse_output(output, keep=KEEPLIST):
                 add_env(match, k)
 
     for key, val in dkeep.items():
-        logging.debug("dkeep[%r]=%r", key, val)
+        logging.info("dkeep[%r]=%r", key, val)
 
     return dkeep
 
