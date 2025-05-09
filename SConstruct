@@ -1198,7 +1198,7 @@ def msvc_default_version():
     installed_versions = get_installed_vcs(msvc_map)
     default_version = installed_versions[0] if installed_versions else None
     logging.info("default_version=%r", default_version)
-    vcpkg_dir = os.path.join(default_verson.vc_dir, "vcpkg")
+    vcpkg_dir = os.path.join(default_version.vc_dir, "vcpkg")
     logging.info("vcpkg_dir=%r, exists=%r", vcpkg_dir, os.path.exists(vcpkg_dir))
     log_vcpkg_roots(osvars=["VCPKG_INSTALLATION_ROOT", "VCPKG_ROOT", "USERPROFILE"], paths=[vcpkg_dir])
     return default_version
